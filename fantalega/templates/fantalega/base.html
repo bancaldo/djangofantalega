@@ -1,0 +1,43 @@
+{% load staticfiles %}
+{# Load the tag library #}
+{% load bootstrap3 %}
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+{% block head %}
+{% endblock %}
+
+{% block navbar %}
+  <div class="navbar navbar-inverse" role="navigation">
+    <div class="container">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="{% url 'leagues' %}">Leagues</a></div>
+
+          <div class="navbar-header">
+            <a class="navbar-brand" href="\admin">Admin</a></div>
+    </div>
+  </div>
+{% endblock %}
+
+
+<html>
+    <head>
+        <title>{% block title %}Django Fantalega{% endblock %}</title>
+    </head>
+    <body>
+        <div class="content container">
+            <div class="row">
+                <div class="col-md-8">
+
+                    {% block content %}
+                    {% endblock %}
+                </div>
+                <br>
+            </div>
+        </div>
+    </body>
+</html>
+

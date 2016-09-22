@@ -1,0 +1,16 @@
+{% extends 'fantalega/base.html' %}
+
+
+{% block content %}
+    <font face="Arial">
+        <h1><font color="green">List of LEAGUES</font></h1>
+    {% if leagues %}
+    <ul>
+      {% for league in leagues %}
+      <li><a href="{% url 'league_details' league.id %}">{{ league.name }}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p>No league found.</p>
+    {% endif %}</font>
+{% endblock %}

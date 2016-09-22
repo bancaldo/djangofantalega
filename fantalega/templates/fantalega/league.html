@@ -1,0 +1,16 @@
+{% extends 'fantalega/base.html' %}
+
+{% block content %}
+	<font face="Arial">
+		<h1><font color="green">{{ league.name }}</font></h1>
+		<br>
+		budget:               <b><font color="blue">{{ league.budget }}</font><br></b>
+		max trade operations: <b><font color="blue">{{ league.max_trades }}</font><br></b>
+		max team goalkeepers: <b><font color="blue">{{ league.max_goalkeepers }}</font><br></b>
+		max team defenders:   <b><font color="blue">{{ league.max_defenders }}</font><br></b>
+		max team midfielders: <b><font color="blue">{{ league.max_midfielders }}</font><br></b>
+		max team forwards:    <b><font color="blue">{{ league.max_forwards }}</font><br></b>
+		rounds to do:         <b><font color="blue">{{ league.rounds }}</font><br></b>
+		offset:               <b><font color="blue">{{ league.offset }}</font><br></b>
+	</font>
+{% endblock %}
