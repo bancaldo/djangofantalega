@@ -7,4 +7,13 @@
 		budget:               <b><font color="blue">{{ team.budget }}</font><br></b>
 		trade remaining:      <b><font color="blue">{{ team.max_trades }}</font><br></b>
 	</font>
+<br><br>
+    <b><font color="orange">Players:</font></b><br>
+    <ul>
+      {% for player in team.player_set.all %}
+      <li><a href="{% url 'player_details' player.id %}">{{ player.name }}
+	  {{ player.real_team }} {{ player.auction_value }}</a></li>
+      {% endfor %}
+    </ul>
+
 {% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'fantalega/base.html' %}
+
+
+{% block content %}
+    <font face="Arial">
+        <h1><font color="green">List of Players</font></h1>
+    {% if players %}
+    <ul>
+      {% for player in players %}
+      <li><a href="{% url 'player_details' player.id %}">{{ player.code}}: {{ player.name }}
+      {{ player.real_team}}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p>No player found.</p>
+    {% endif %}</font>
+{% endblock %}

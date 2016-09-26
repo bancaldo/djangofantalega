@@ -44,6 +44,55 @@ class LeaguesTeams(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
 
 
+class Player(models.Model):
+    code = models.IntegerField()
+    name = models.CharField(max_length=32)
+    real_team = models.CharField(max_length=3)
+    cost = models.IntegerField()
+    auction_value = models.IntegerField()
+    role = models.CharField(max_length=16)
+    team = models.ForeignKey(Team, null=True)
+
+    def __str__(self):
+        return self.name
+
+    @staticmethod
+    def get_by_code(code):
+        return Player.objects.filter(code=int(code)).first()
+
+    @staticmethod
+    def code_to_role(code):
+        if int(code) < 200:
+            return 'goalkeeper'
+        elif 200 < int(code) < 500:
+            return 'defender'
+        elif 500 < int(code) < 800:
+            return 'midfielder'
+        elif int(code) > 800:
+            return 'forward'
+        else:
+            return 'unknown'
+
+    @staticmethod
+    def upload(path):
+        with open(path) as data:
+            for record in data:  ## nnn|PLAYER_NAME|REAL_TEAM|x|y|n
+                code, name, real_team, fv, v, cost = record.strip().split("|")
+                player = Player.get_by_code(code)
+                role = Player.code_to_role(code.strip())
+                if not player:
+                    Player.objects.create(name=name, code=code, role=role,
+                                          real_team=real_team, cost=cost,
+                                          auction_value=0)
+                    print "[INFO] Creating %s %s" % (code, name)
+                else:
+                    player.cost = cost
+                    player.real_team = real_team
+                    player.save()
+                    print "[INFO] Upgrading %s %s" % (code, name)
+        print "[INFO] Players uploading done!"
+
+
 #>>> ringo = Person.objects.create(name="Ringo Starr")
 #>>> paul = Person.objects.create(name="Paul McCartney")
 #>>> beatles = Group.objects.create(name="The Beatles")

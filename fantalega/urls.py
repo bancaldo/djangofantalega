@@ -13,4 +13,9 @@ urlpatterns = [
     url(r'^teams/$', views.teams, name='teams'),
     url(r'^teams/(?P<team_id>[0-9]+)/$', views.team_details,
         name='team_details'),
+    url(r'^players/$', views.players, name='players'),
+    url(r'^players/(?P<player_id>[0-9]+)/$', views.player_details,
+        name='player_details'),
+    url(r'^leagues/(?P<league_id>[0-9]+)/auction$', views.auction,
+        name='auction'),
 ]

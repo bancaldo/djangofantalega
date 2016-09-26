@@ -1,0 +1,19 @@
+{% extends 'fantalega/base.html' %}
+
+{% block content %}
+	<font face="Arial">
+		<h1><font color="green">{{ player.name }}</font></h1>
+		<br>
+		code:                 <b><font color="blue">{{ player.code }}</font><br></b>
+		real team:            <b><font color="blue">{{ player.real_team }}</font><br></b>
+		role:                 <b><font color="blue">{{ player.role }}</font><br></b>
+		cost:                 <b><font color="blue">{{ player.cost }}</font><br></b>
+		auction value:        <b><font color="blue">{{ player.auction_value }}</font><br></b>
+	</font>
+    <br>
+    <br>
+    <b><font color="orange">evaluations:</font></b>
+    <ul>
+    </ul>
+
+{% endblock %}
