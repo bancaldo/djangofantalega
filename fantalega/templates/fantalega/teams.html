@@ -1,0 +1,18 @@
+{% extends 'fantalega/base.html' %}
+
+
+{% block content %}
+    <font face="Arial">
+        <h1><font color="green">List of TEAMS</font></h1>
+    {% if teams %}
+    <ul>
+      {% for team in teams %}
+      <li><a href="{% url 'team_details' team.id %}">{{ team.name }}</a></li>
+        budget: <font color="green">{{ team.budget }}</font>
+        trades remaining: <font color="green">{{ team.max_trades }}</font>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p>No team found.</p>
+    {% endif %}</font>
+{% endblock %}

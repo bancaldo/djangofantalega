@@ -13,4 +13,14 @@
 		rounds to do:         <b><font color="blue">{{ league.rounds }}</font><br></b>
 		offset:               <b><font color="blue">{{ league.offset }}</font><br></b>
 	</font>
+    <br>
+    <br>
+    <b><font color="orange">League Teams:</font></b>
+    <ul>
+      {% for team in teams %}
+      <li><a href="{% url 'team_details' team.id %}">{{ team.name }}</a></li>
+      {% endfor %}
+    </ul>
+
+
 {% endblock %}

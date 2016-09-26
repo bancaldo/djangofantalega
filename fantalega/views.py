@@ -1,6 +1,6 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render
-from .models import League
+from .models import League, Team
 
 
 # Create your views here.
@@ -14,5 +14,16 @@ def leagues(request):
 
 def league_details(request, league_id):
     league = League.objects.get(id=int(league_id))
-    context = {'league': league}
+    teams = league.team_set.all()
+    context = {'league': league, 'teams': teams}
     return render(request, 'fantalega/league.html', context)
+
+def teams(request):
+    teams = Team.objects.order_by('name')
+    context = {'teams': teams}
+    return render(request, 'fantalega/teams.html', context)
+
+def team_details(request, team_id):
+    team = Team.objects.get(id=int(team_id))
+    context = {'team': team}
+    return render(request, 'fantalega/team.html', context)
