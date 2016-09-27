@@ -38,6 +38,30 @@ class Team(models.Model):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    def auction_upload(path):
+        with open(path) as data:
+            for record in data:
+                name, auction_value, team_name = record.strip().split(";")
+                player = Player.objects.filter(name=name.upper()).first()
+                if player:
+                    player.auction_value = int(auction_value)
+                    team = Team.objects.filter(name=team_name).first()
+                    if team:
+                        player.team = team
+                        team.budget -= player.auction_value
+                        player.save()
+                        team.save()
+                        print "[INFO] Remaining Budget %s: %s" % (team.name,
+                                                                  team.budget)
+                        print "[INFO] Associating %s - %s" % (player.name,
+                                                              team.name)
+                    else:
+                        print "[ERROR] Team %s not found" % team_name
+                else:
+                    print "[ERROR] Player %s not found" % name
+            print "[INFO] Auction upload done!"
+
 
 class LeaguesTeams(models.Model):
     league = models.ForeignKey(League, on_delete=models.CASCADE)
@@ -93,18 +117,12 @@ class Player(models.Model):
         print "[INFO] Players uploading done!"
 
 
-#>>> ringo = Person.objects.create(name="Ringo Starr")
-#>>> paul = Person.objects.create(name="Paul McCartney")
-#>>> beatles = Group.objects.create(name="The Beatles")
-#>>> m1 = Membership(person=ringo, group=beatles,
-#... date_joined=date(1962, 8, 16),
-#... invite_reason="Needed a new drummer.")
-#>>> m1.save()
-#>>> beatles.members.all()
-#<QuerySet [<Person: Ringo Starr>]>
-#>>> ringo.group_set.all()
-#<QuerySet [<Group: The Beatles>]>
-#>>> m2 = Membership.objects.create(person=paul, group=beatles,
-#... date_joined=date(1960, 8, 1),
-#... invite_reason="Wanted to form a band.")
-#>>> beatles.members.all()
+class Trade(models.Model):
+    player = models.ForeignKey(Player)
+    team = models.ForeignKey(Team)
+    direction = models.CharField(max_length=3)  # IN or OUT value
+
+    def __str__(self):
+        return "[%s] %s: %s" % (self.direction, self.team.name,
+                                self.player.name)
+

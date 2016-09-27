@@ -18,4 +18,7 @@ urlpatterns = [
         name='player_details'),
     url(r'^leagues/(?P<league_id>[0-9]+)/auction$', views.auction,
         name='auction'),
+    url(r'^trades/$', views.trades, name='trades'),
+    url(r'^teams/(?P<team_id>[0-9]+)/trade$', views.trade,
+        name='trade'),
 ]

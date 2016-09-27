@@ -1,14 +1,14 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render, redirect
-from .models import League, Team, Player
-from .forms import AuctionPlayer
+from .models import League, Team, Player, Trade
+from .forms import AuctionPlayer, TradeForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
 
 
 # Create your views here.
 def index(request):
-    return render(request, 'history/index.html')
+    return render(request, 'fantalega/index.html')
 
 def leagues(request):
     leagues = League.objects.order_by('-name')  ## - is for descendng order
@@ -76,3 +76,63 @@ def auction(request, league_id):
         form = AuctionPlayer(initial={'players': players, 'teams': teams})
     return render(request, 'fantalega/auction.html',
                   {'form': form, 'players': players, 'teams': teams})
+
+def trade(request, team_id):
+    team = Team.objects.get(pk=int(team_id))
+    players = [(p.code, "%s - %s" %(p.name, p.role))
+               for p in team.player_set.all()]
+    others = [(p.code, "%s - %s" % (p.name, p.role))
+               for p in Player.objects.order_by('name')if p.team]
+    if request.method == "POST":
+        form = TradeForm(request.POST, initial={'players': players,
+                                                'others': others})
+        if form.is_valid():
+            player_out_code = form.cleaned_data['player_out']
+            player_out = Player.get_by_code(int(player_out_code))
+            player_in_code = form.cleaned_data['player_in']
+            player_in = Player.get_by_code(int(player_in_code))
+            team.max_trades -= 1
+            other_team = player_in.team
+            other_team.max_trades -= 1
+            if team.max_trades > 0 and other_team.max_trades > 0:
+                player_in.team = team
+                player_out.team = other_team
+                if player_in.role == player_out.role:
+                    player_in.save()
+                    player_out.save()
+                    team.save()
+                    other_team.save()
+                    Trade.objects.create(player=player_out, team=team,
+                                         direction="OUT")
+                    Trade.objects.create(player=player_in, team=team,
+                                         direction="IN")
+                    Trade.objects.create(player=player_out, team=other_team,
+                                         direction="IN")
+                    Trade.objects.create(player=player_in, team=other_team,
+                                         direction="OUT")
+                    messages.add_message(request, messages.SUCCESS,
+                        'Trade operation %s: --> [OUT] %s [IN] %s stored!' % (
+                            team, player_out.name, player_in.name))
+                    messages.add_message(request, messages.SUCCESS,
+                        'Trade operation %s: --> [OUT] %s [IN] %s stored!' % (
+                            other_team, player_in.name, player_out.name))
+                else:
+                    messages.add_message(request, messages.ERROR,
+                        'Players MUST have the same role, aborted!')
+
+            else:
+                messages.add_message(request, messages.ERROR,
+                    "Not enough trade operations: %s [%s] and %s [%s]" % (
+                        team.name, team.max_trades, other_team.name,
+                        other_team.max_trades))
+            return redirect('team_details', team.id)
+    else:
+        form = TradeForm(initial={'players': players, 'others': others})
+    return render(request, 'fantalega/trade.html',
+                  {'form': form, 'players': players, 'others': others,
+                   'team': team})
+
+def trades(request):
+    trades = Trade.objects.all()
+    context = {'trades': trades,}
+    return render(request, 'fantalega/trades.html', context)

@@ -15,5 +15,13 @@
 	  {{ player.real_team }} {{ player.auction_value }}</a></li>
       {% endfor %}
     </ul>
+<br><br>
+    <b><font color="orange">Trade operations:</font></b><br>
+    <ul>
+      {% for trade in team.trade_set.all %}
+      <li>[{{ trade.direction }}] {{ trade.player.name }}</li>
+      {% endfor %}
+    </ul>
 
+      <b><a href="{% url 'trade' team.id %}">New trade operation...</a></b>
 {% endblock %}

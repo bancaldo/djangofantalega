@@ -1,0 +1,16 @@
+{% extends 'fantalega/base.html' %}
+
+
+{% block content %}
+    <font face="Arial">
+        <h1><font color="green">List of all trade operations</font></h1>
+    {% if trades %}
+    <ul>
+      {% for trade in trades %}
+      <li>[{{ trade.direction }}]: {{ trade.team.name }} {{ trade.player.name }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p>No trade found.</p>
+    {% endif %}</font>
+{% endblock %}

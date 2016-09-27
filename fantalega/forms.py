@@ -17,3 +17,17 @@ class AuctionPlayer(forms.Form):
                                                choices=dict_values['teams'],
                                                widget=forms.Select(),
                                                required=False)
+
+
+class TradeForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        dict_values = kwargs.pop('initial')
+        super(TradeForm, self).__init__(*args, **kwargs)
+        self.fields['player_out'] = forms.ChoiceField(label=u'OUT',
+                                               choices=dict_values['players'],
+                                               widget=forms.Select(),
+                                               required=False)
+        self.fields['player_in'] = forms.ChoiceField(label=u'IN',
+                                               choices=dict_values['others'],
+                                               widget=forms.Select(),
+                                               required=False)
