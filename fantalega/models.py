@@ -126,3 +126,12 @@ class Trade(models.Model):
         return "[%s] %s: %s" % (self.direction, self.team.name,
                                 self.player.name)
 
+class Match (models.Model):
+    league = models.ForeignKey(League, related_name='matches')
+    day = models.IntegerField()
+    home_team = models.ForeignKey(Team, related_name='home_team')
+    visit_team = models.ForeignKey(Team, related_name='visit_team')
+
+    def __str__(self):
+        return "[%s] %s - %s" % (self.day, self.home_team.name,
+                                self.visit_team.name)

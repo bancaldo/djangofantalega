@@ -1,9 +1,10 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render, redirect
-from .models import League, Team, Player, Trade
+from .models import League, Team, Player, Trade, Match
 from .forms import AuctionPlayer, TradeForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
+from fantalega.scripts.calendar import create_season
 
 
 # Create your views here.
@@ -136,3 +137,24 @@ def trades(request):
     trades = Trade.objects.all()
     context = {'trades': trades,}
     return render(request, 'fantalega/trades.html', context)
+
+
+def calendar(request, league_id):
+    league = League.objects.get(id=int(league_id))
+    matches = league.matches.order_by('day')
+    if matches:
+        messages.add_message(request, messages.WARNING,
+            'Calendar already exists!!')
+    else:
+        teams = [t for t in league.team_set.all()]
+        cal = create_season(teams=teams, num=league.rounds)
+        for record in cal:
+            day, home_team, visit_team = record
+            Match.objects.create(league=league, day=day, home_team=home_team,
+                                 visit_team=visit_team)
+        messages.add_message(request, messages.SUCCESS,
+            'Calendar done!')
+        matches = league.matches.order_by('day')
+
+    context = {'matches': matches, 'league': league}
+    return render(request, 'fantalega/calendar.html', context)

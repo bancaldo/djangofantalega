@@ -21,4 +21,6 @@ urlpatterns = [
     url(r'^trades/$', views.trades, name='trades'),
     url(r'^teams/(?P<team_id>[0-9]+)/trade$', views.trade,
         name='trade'),
+    url(r'^leagues/(?P<league_id>[0-9]+)/calendar$', views.calendar,
+        name='calendar'),
 ]

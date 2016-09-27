@@ -1,0 +1,18 @@
+{% extends 'fantalega/base.html' %}
+
+
+{% block content %}
+    <font face="Arial">
+        <h1><font color="green">List of all matches for</font>
+                <font color="green">{{ league.name }}</font></h1>
+
+    {% if matches %}
+    <ul>
+      {% for match in matches %}
+      <li><b>giornata {{ match.day }}</b>: <font color="blue">{{ match.home_team.name }}</font> - <font color="red">{{ match.visit_team.name }}</font></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p>No calendar found.</p>
+    {% endif %}</font>
+{% endblock %}
