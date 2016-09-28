@@ -1,0 +1,14 @@
+{% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
+
+{% block content %}
+    <h1>Upload votes for <font color="green">{{ league.name }}</font></h1>
+    <form enctype="multipart/form-data" method="POST" class="form">
+		{% csrf_token %}
+        {% bootstrap_form form %}
+            {% buttons %}
+                <button type="submit" class="btn btn-primary">
+                {% bootstrap_icon "upload" %} Upload
+			{% endbuttons %}
+    </form>
+{% endblock %}

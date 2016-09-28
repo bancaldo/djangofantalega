@@ -25,7 +25,7 @@
     <b><a href="{% url 'auction' league.id %}">Auction...</a></b>
     <br>
     <br>
-    <b><font color="orange">votes</font></a></b>
+    <b><a href="{% url 'upload_votes' league.id %}">upload votes</a></b>
     <br>
     <br>
       {% for day in days %}

@@ -1,10 +1,11 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render, redirect
 from .models import League, Team, Player, Trade, Match, Evaluation
-from .forms import AuctionPlayer, TradeForm
+from .forms import AuctionPlayer, TradeForm, UploadVotesForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
 from fantalega.scripts.calendar import create_season
+import os
 
 
 # Create your views here.
@@ -141,7 +142,6 @@ def trades(request):
     context = {'trades': trades,}
     return render(request, 'fantalega/trades.html', context)
 
-
 def calendar(request, league_id):
     league = League.objects.get(id=int(league_id))
     matches = league.matches.order_by('day')
@@ -167,3 +167,18 @@ def vote(request, league_id, day):
     votes = Evaluation.objects.filter(league=league, day=day).all()
     context = {'votes': votes, 'day': day, 'league': league}
     return render(request, 'fantalega/vote.html', context)
+
+def upload_votes(request, league_id):
+    league = League.objects.get(pk=int(league_id))
+    if request.method == "POST":
+        form = UploadVotesForm(request.POST, request.FILES)
+        if form.is_valid():
+            day = form.cleaned_data['day']
+            file_in = request.FILES['file_in']
+            Evaluation.upload(path=file_in, day=day, league=league)
+            messages.add_message(request, messages.SUCCESS,'votes uploaded!')
+            return redirect('league_details', league.id)
+    else:
+        form = UploadVotesForm()
+    return render(request, 'fantalega/upload_votes.html',
+                  {'form': form, 'league': league})

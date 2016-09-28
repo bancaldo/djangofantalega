@@ -150,7 +150,8 @@ class Evaluation(models.Model):
 
     @staticmethod
     def upload(path, day, league):
-        with open(path) as data:
+        #with open(path) as data:  ## for shell string-file-path upload
+        with path as data:  ## for InMemoryUploadedFile object upload
             for record in data:  ## nnn|PLAYER_NAME|REAL_TEAM|x|y|n
                 code, name, real_team, fv, v, cost = record.strip().split("|")
                 player = Player.get_by_code(code)

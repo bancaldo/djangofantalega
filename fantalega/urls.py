@@ -25,4 +25,6 @@ urlpatterns = [
         name='calendar'),
     url(r'^leagues/(?P<league_id>[0-9]+)/votes/(?P<day>[0-9]+)/$',
         views.vote, name='vote'),
+    url(r'^leagues/(?P<league_id>[0-9]+)/upload$', views.upload_votes,
+        name='upload_votes'),
 ]

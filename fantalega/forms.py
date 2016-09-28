@@ -1,6 +1,6 @@
 # noinspection PyUnresolvedReferences
 from django import forms
-from .models import Player, Team
+from .models import League
 
 
 class AuctionPlayer(forms.Form):
@@ -31,3 +31,7 @@ class TradeForm(forms.Form):
                                                choices=dict_values['others'],
                                                widget=forms.Select(),
                                                required=False)
+
+class UploadVotesForm(forms.Form):
+    day =  forms.IntegerField()
+    file_in = forms.FileField()
