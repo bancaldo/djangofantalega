@@ -1,6 +1,6 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render, redirect
-from .models import League, Team, Player, Trade, Match
+from .models import League, Team, Player, Trade, Match, Evaluation
 from .forms import AuctionPlayer, TradeForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
@@ -19,7 +19,9 @@ def leagues(request):
 def league_details(request, league_id):
     league = League.objects.get(id=int(league_id))
     teams = league.team_set.all()
-    context = {'league': league, 'teams': teams}
+    days = [d['day'] for d in
+            Evaluation.objects.order_by('day').values('day').distinct()]
+    context = {'league': league, 'teams': teams, 'days': days}
     return render(request, 'fantalega/league.html', context)
 
 def teams(request):
@@ -39,7 +41,8 @@ def players(request):
 
 def player_details(request, player_id):
     player = Player.objects.get(id=int(player_id))
-    context = {'player': player}
+    votes = player.player_votes.all()
+    context = {'player': player, 'votes': votes}
     return render(request, 'fantalega/player.html', context)
 
 def auction(request, league_id):
@@ -158,3 +161,9 @@ def calendar(request, league_id):
 
     context = {'matches': matches, 'league': league}
     return render(request, 'fantalega/calendar.html', context)
+
+def vote(request, league_id, day):
+    league = League.objects.get(pk=league_id)
+    votes = Evaluation.objects.filter(league=league, day=day).all()
+    context = {'votes': votes, 'day': day, 'league': league}
+    return render(request, 'fantalega/vote.html', context)

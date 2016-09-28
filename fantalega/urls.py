@@ -23,4 +23,6 @@ urlpatterns = [
         name='trade'),
     url(r'^leagues/(?P<league_id>[0-9]+)/calendar$', views.calendar,
         name='calendar'),
+    url(r'^leagues/(?P<league_id>[0-9]+)/votes/(?P<day>[0-9]+)/$',
+        views.vote, name='vote'),
 ]

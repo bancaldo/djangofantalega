@@ -3,17 +3,42 @@
 {% block content %}
 	<font face="Arial">
 		<h1><font color="green">{{ player.name }}</font></h1>
-		<br>
-		code:                 <b><font color="blue">{{ player.code }}</font><br></b>
-		real team:            <b><font color="blue">{{ player.real_team }}</font><br></b>
-		role:                 <b><font color="blue">{{ player.role }}</font><br></b>
-		cost:                 <b><font color="blue">{{ player.cost }}</font><br></b>
-		auction value:        <b><font color="blue">{{ player.auction_value }}</font><br></b>
 	</font>
-    <br>
-    <br>
-    <b><font color="orange">evaluations:</font></b>
-    <ul>
-    </ul>
 
+	<table class="table table-striped" width="100%">
+	  <tr>
+		  <th>code</th>
+		  <th>real team</th>
+		  <th>role</th>
+		  <th>cost</th>
+		  <th>auction value</th>
+	  </tr>
+	  <tr>
+		  <td>{{ player.code }}</td>
+		  <td>{{ player.real_team }}</td>
+		  <td>{{ player.role }}</td>
+		  <td>{{ player.cost }}</td>
+		  <td>{{ player.auction_value }}</td>
+	  </tr>
+	</table>
+    <br>
+    <b><font color="orange">votes</font></a></b>
+    <br>
+
+	<table class="table table-striped" width="100%">
+	  <tr>
+		  <th>day</th>
+		  <th>fanta value</th>
+		  <th>value</th>
+		  <th>cost</th>
+	  </tr>
+        {% for vote in votes %}
+          <tr>
+			  <td>{{ vote.day }}</td>
+			  <td>{{ vote.fanta_value }}</td>
+			  <td>{{ vote.net_value }}</td>
+			  <td>{{ vote.cost }}</td>
+    	  </tr>
+	   {% endfor %}
+	</table>
 {% endblock %}

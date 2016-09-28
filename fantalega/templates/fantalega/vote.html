@@ -1,0 +1,30 @@
+{% extends 'fantalega/base.html' %}
+
+{% block content %}
+    <font face="Arial">
+        <h1><font color="red">{{ league.name }}</font></h1>
+        <font color="green">List of evaluations for day {{ day }}</font><br>
+      <br>
+        <table class="table table-striped" width="100%">
+          <tr>
+              <th>code</th>
+              <th>name</th>
+              <th>team</th>
+              <th>fanta value</th>
+              <th>value</th>
+              <th>cost</th>
+          </tr>
+
+          <tr>
+              {% for vote in votes %}
+                  <td>{{ vote.player.code }}</td>
+                  <td><a href="{% url 'player_details' vote.player.id %}">
+                      {{ vote.player.name }}</a></td>
+                  <td>{{ vote.player.real_team }}</td>
+                  <td>{{ vote.fanta_value }}</td>
+                  <td>{{ vote.net_value }}  </td>
+                  <td>{{ vote.cost }}</td></tr>
+              {% endfor %}
+        </table>
+    </font>
+{% endblock %}

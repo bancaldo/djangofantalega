@@ -135,3 +135,50 @@ class Match (models.Model):
     def __str__(self):
         return "[%s] %s - %s" % (self.day, self.home_team.name,
                                 self.visit_team.name)
+
+class Evaluation(models.Model):
+    league = models.ForeignKey(League, related_name='league_votes')
+    player = models.ForeignKey(Player, related_name='player_votes')
+    day = models.IntegerField()
+    net_value = models.FloatField()
+    fanta_value = models.FloatField()
+    cost = models.IntegerField()
+
+    def __str__(self):
+        return "[%s] %s" % (self.day, self.player.name)
+
+
+    @staticmethod
+    def upload(path, day, league):
+        with open(path) as data:
+            for record in data:  ## nnn|PLAYER_NAME|REAL_TEAM|x|y|n
+                code, name, real_team, fv, v, cost = record.strip().split("|")
+                player = Player.get_by_code(code)
+                role = Player.code_to_role(code.strip())
+                if not player:
+                    player = Player(name=name, code=code, role=role,
+                                    real_team=real_team, cost=cost,
+                                    auction_value=0)
+                    print "[INFO] Creating %s %s" % (code, name)
+                else:
+                    player.cost = cost
+                    player.real_team = real_team
+                    print "[INFO] Upgrading %s %s" % (code, name)
+                player.save()
+                ## storing evaluation
+                evaluation = Evaluation.objects.filter(day=day,
+                                                       player=player).first()
+                if evaluation:
+                    evaluation.net_value = v
+                    evaluation.fanta_value = fv
+                    evaluation.cost = cost
+                    evaluation.save()
+                    print "[INFO] Upgrading values day: %s player %s" % (
+                        day, player.name)
+                else:
+                    Evaluation.objects.create(day=day, player=player, cost=cost,
+                                              net_value=v, fanta_value=fv,
+                                              league=league)
+                    print "[INFO] Creating values day: %s player %s" % (
+                        day, player.name)
+        print "[INFO] Evaluation uploading done!"

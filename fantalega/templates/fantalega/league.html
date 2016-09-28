@@ -22,7 +22,15 @@
       {% endfor %}
     </ul>
 
-      <b><a href="{% url 'auction' league.id %}">Auction...</a></b>
+    <b><a href="{% url 'auction' league.id %}">Auction...</a></b>
+    <br>
+    <br>
+    <b><font color="orange">votes</font></a></b>
+    <br>
+    <br>
+      {% for day in days %}
+      <li><a href="{% url 'vote' league.id day %}">Evaluation day: {{ day }}</a></li>
+      {% endfor %}
     <br>
     <br>
     <b><a href="{% url 'calendar' league.id %}">Create Calendar</font></a></b>
