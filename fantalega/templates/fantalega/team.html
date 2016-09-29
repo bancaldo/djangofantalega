@@ -45,4 +45,13 @@
     </table>
 
       <b><a href="{% url 'trade' team.id %}">New trade operation...</a></b>
+
+    <br>
+    <b><a href="{% url 'upload_lineup' team.id %}">Lineups</a></b>
+    <ul>
+      {% for lineup in teams.team_lineups.all %}
+          <li><a href="{% url 'lineup_details' team.id day %}">lineup day:
+              {{ lineup.day }}</a></li>
+      {% endfor %}
+    </ul>
 {% endblock %}

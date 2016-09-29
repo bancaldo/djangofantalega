@@ -1,6 +1,8 @@
 # noinspection PyUnresolvedReferences
 from django import forms
-from .models import League
+from .models import Player
+# noinspection PyUnresolvedReferences
+from django.utils.safestring import mark_safe
 
 
 class AuctionPlayer(forms.Form):
@@ -33,5 +35,63 @@ class TradeForm(forms.Form):
                                                required=False)
 
 class UploadVotesForm(forms.Form):
-    day =  forms.IntegerField()
+    day = forms.IntegerField()
     file_in = forms.FileField()
+
+
+
+#class HorizontalRadioRenderer(forms.RadioSelect.renderer):
+#    def render(self):
+#        return mark_safe(u'\n'.join([u'%s\n' % w for w in self]))
+
+
+class UploadLineupForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        dict_values = kwargs.pop('initial')
+        super(UploadLineupForm, self).__init__(*args, **kwargs)
+        self.fields['module'] = forms.ChoiceField(label=u'module',
+                                               choices=dict_values['modules'],
+                                               widget=forms.Select())
+        self.fields['day'] = forms.IntegerField()
+#        for n in range(1, 12):
+#            self.fields['holder_%s' % n] = forms.ChoiceField(
+#                label=u'holder %s' % n, choices=dict_values['players'],
+#                widget=forms.Select(), required=False)
+        self.fields['holders'] = forms.MultipleChoiceField(
+                                        choices=dict_values['players'],
+                                        widget=forms.CheckboxSelectMultiple())
+        for n in range(1, 11):
+            self.fields['substitute_%s' % n] = forms.ChoiceField(
+                label=u'substitute %s' % n, choices=dict_values['players'],
+                widget=forms.Select(), required=False)
+
+    def check_holders(self):
+            error = ''
+            data = self.cleaned_data['holders']
+            substitutes = [self.cleaned_data.get('substitute_%s' % n)
+                           for n in range(1, 11)]
+            if len(data) != 11:
+                return "holder players number is wrong!"
+            module = dict(self.fields['module'].choices)[
+                int(self.cleaned_data['module'])]
+            mod_defs, mod_mids, mod_forws = module
+            goalkeepers = len([code for code in data if int(code) < 200 ])
+            defenders = len([code for code in data if 200 < int(code) < 500 ])
+            midfielders = len([code for code in data if 500 < int(code) < 800 ])
+            forwarders = len([code for code in data if int(code) > 800 ])
+            if goalkeepers > 1:
+                return "To many goalkeepers!"
+#                raise forms.ValidationError("To many goalkeepers!")
+            if defenders != int(mod_defs):
+                return "number of defenders doesn't match module!"
+            if midfielders != int(mod_mids):
+                return "number of midfielders doesn't match module!"
+            if forwarders != int(mod_forws):
+                return "number of forwarders doesn't match module!"
+            for code in substitutes:
+                player = Player.get_by_code(int(code))
+                if code in data:
+                    return "substitute %s is in holders!" % player.name
+                if substitutes.count(code) > 1:
+                    return "Duplicate substitute %s in list!" % player.name
+            return error

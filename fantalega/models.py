@@ -63,6 +63,7 @@ class Team(models.Model):
             print "[INFO] Auction upload done!"
 
 
+# M2M secondary Association object
 class LeaguesTeams(models.Model):
     league = models.ForeignKey(League, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
@@ -100,7 +101,7 @@ class Player(models.Model):
     @staticmethod
     def upload(path):
         with open(path) as data:
-            for record in data:  ## nnn|PLAYER_NAME|REAL_TEAM|x|y|n
+            for record in data:  # nnn|PLAYER_NAME|REAL_TEAM|x|y|n
                 code, name, real_team, fv, v, cost = record.strip().split("|")
                 player = Player.get_by_code(code)
                 role = Player.code_to_role(code.strip())
@@ -126,6 +127,7 @@ class Trade(models.Model):
         return "[%s] %s: %s" % (self.direction, self.team.name,
                                 self.player.name)
 
+
 class Match (models.Model):
     league = models.ForeignKey(League, related_name='matches')
     day = models.IntegerField()
@@ -134,7 +136,8 @@ class Match (models.Model):
 
     def __str__(self):
         return "[%s] %s - %s" % (self.day, self.home_team.name,
-                                self.visit_team.name)
+                                 self.visit_team.name)
+
 
 class Evaluation(models.Model):
     league = models.ForeignKey(League, related_name='league_votes')
@@ -147,12 +150,11 @@ class Evaluation(models.Model):
     def __str__(self):
         return "[%s] %s" % (self.day, self.player.name)
 
-
     @staticmethod
     def upload(path, day, league):
-        #with open(path) as data:  ## for shell string-file-path upload
-        with path as data:  ## for InMemoryUploadedFile object upload
-            for record in data:  ## nnn|PLAYER_NAME|REAL_TEAM|x|y|n
+        # with open(path) as data:  # for shell string-file-path upload
+        with path as data:  # for InMemoryUploadedFile object upload
+            for record in data:  # nnn|PLAYER_NAME|REAL_TEAM|x|y|n
                 code, name, real_team, fv, v, cost = record.strip().split("|")
                 player = Player.get_by_code(code)
                 role = Player.code_to_role(code.strip())
@@ -166,7 +168,7 @@ class Evaluation(models.Model):
                     player.real_team = real_team
                     print "[INFO] Upgrading %s %s" % (code, name)
                 player.save()
-                ## storing evaluation
+                # storing evaluation
                 evaluation = Evaluation.objects.filter(day=day,
                                                        player=player).first()
                 if evaluation:
@@ -183,3 +185,38 @@ class Evaluation(models.Model):
                     print "[INFO] Creating values day: %s player %s" % (
                         day, player.name)
         print "[INFO] Evaluation uploading done!"
+
+
+class Lineup (models.Model):
+    team = models.ForeignKey(Team, related_name='team_lineups')
+    players = models.ManyToManyField(Player, through='LineupsPlayers',
+                                     related_name='player_lineups')
+    timestamp = models.DateField()
+    day = models.IntegerField()
+    pts = models.FloatField(null=True)
+    won = models.IntegerField(null=True)
+    matched = models.IntegerField(null=True)
+    lost = models.IntegerField(null=True)
+    goals_made = models.IntegerField(null=True)
+    goals_conceded = models.IntegerField(null=True)
+
+    def get_players_by_position(self):
+        lineup_players = LineupsPlayers.query.filter(lineup=self.id).order_by(
+            LineupsPlayers.position).all()
+        if lineup_players:
+            return [rec.player for rec in lineup_players]
+
+    def __str__(self):
+        return "[%s] %s" % (self.day, self.team.name)
+
+
+# M2M secondary Association object
+class LineupsPlayers(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    lineup = models.ForeignKey(Lineup, on_delete=models.CASCADE)
+    position = models.IntegerField()
+
+    @staticmethod
+    def get_sorted_lineup(lineup):
+        return LineupsPlayers.objects.filter(
+            lineup=lineup).order_by('position').all()

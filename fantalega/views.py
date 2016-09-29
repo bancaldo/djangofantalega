@@ -1,21 +1,24 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render, redirect
 from .models import League, Team, Player, Trade, Match, Evaluation
-from .forms import AuctionPlayer, TradeForm, UploadVotesForm
+from .models import Lineup, LineupsPlayers
+from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
 from fantalega.scripts.calendar import create_season
-import os
+from datetime import datetime
 
 
 # Create your views here.
 def index(request):
     return render(request, 'fantalega/index.html')
 
+
 def leagues(request):
     leagues = League.objects.order_by('-name')  ## - is for descendng order
     context = {'leagues': leagues,}
     return render(request, 'fantalega/leagues.html', context)
+
 
 def league_details(request, league_id):
     league = League.objects.get(id=int(league_id))
@@ -25,26 +28,31 @@ def league_details(request, league_id):
     context = {'league': league, 'teams': teams, 'days': days}
     return render(request, 'fantalega/league.html', context)
 
+
 def teams(request):
     teams = Team.objects.order_by('name')
     context = {'teams': teams}
     return render(request, 'fantalega/teams.html', context)
+
 
 def team_details(request, team_id):
     team = Team.objects.get(id=int(team_id))
     context = {'team': team}
     return render(request, 'fantalega/team.html', context)
 
+
 def players(request):
     players = Player.objects.order_by('code')
     context = {'players': players,}
     return render(request, 'fantalega/players.html', context)
+
 
 def player_details(request, player_id):
     player = Player.objects.get(id=int(player_id))
     votes = player.player_votes.all()
     context = {'player': player, 'votes': votes}
     return render(request, 'fantalega/player.html', context)
+
 
 def auction(request, league_id):
     league = League.objects.get(pk=int(league_id))
@@ -81,6 +89,7 @@ def auction(request, league_id):
         form = AuctionPlayer(initial={'players': players, 'teams': teams})
     return render(request, 'fantalega/auction.html',
                   {'form': form, 'players': players, 'teams': teams})
+
 
 def trade(request, team_id):
     team = Team.objects.get(pk=int(team_id))
@@ -137,10 +146,12 @@ def trade(request, team_id):
                   {'form': form, 'players': players, 'others': others,
                    'team': team})
 
+
 def trades(request):
     trades = Trade.objects.all()
     context = {'trades': trades,}
     return render(request, 'fantalega/trades.html', context)
+
 
 def calendar(request, league_id):
     league = League.objects.get(id=int(league_id))
@@ -162,11 +173,13 @@ def calendar(request, league_id):
     context = {'matches': matches, 'league': league}
     return render(request, 'fantalega/calendar.html', context)
 
+
 def vote(request, league_id, day):
     league = League.objects.get(pk=league_id)
     votes = Evaluation.objects.filter(league=league, day=day).all()
     context = {'votes': votes, 'day': day, 'league': league}
     return render(request, 'fantalega/vote.html', context)
+
 
 def upload_votes(request, league_id):
     league = League.objects.get(pk=int(league_id))
@@ -182,3 +195,54 @@ def upload_votes(request, league_id):
         form = UploadVotesForm()
     return render(request, 'fantalega/upload_votes.html',
                   {'form': form, 'league': league})
+
+
+def lineup_details(request, team_id, day):
+    team = Team.objects.get(pk=team_id)
+    lineup = team.team_lineups.filter(day=1).first()
+    players = LineupsPlayers.get_sorted_lineup(lineup)
+    holders = players[:12]
+    substitutes = players[12:]
+    context = {'team': team, 'holders': holders, 'substitutes': substitutes}
+    return render(request, 'fantalega/lineup.html', context)
+
+
+def upload_lineup(request, team_id):
+    modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
+               (6, '532'), (7, '541')]
+    team = Team.objects.get(pk=int(team_id))
+    players = [(p.code, "%s [%s]" %(p.name, p.role))
+               for p in team.player_set.all()]
+    if request.method == "POST":
+        form = UploadLineupForm(request.POST,
+            initial={'players': players, 'team': team, 'modules': modules})
+        if form.is_valid():
+            day = form.cleaned_data['day']
+            module_id = form.cleaned_data['module']
+            module = dict(form.fields['module'].choices)[int(module_id)]
+            holders = [Player.get_by_code(int(code)) for code in
+                       form.cleaned_data['holders']]
+            substitutes = [Player.get_by_code(int(code)) for code in
+                           [form.cleaned_data['substitute_%s' % n]
+                            for n in range(1, 11)]]
+            error = form.check_holders()
+            if error:
+                messages.add_message(request, messages.ERROR, error)
+            else:
+                messages.add_message(request, messages.SUCCESS,
+                                     "Lineup correct!")
+                lineup = Lineup.objects.filter(team=team, day=day).first()
+                if not lineup:
+                    lineup = Lineup.objects.create(team=team, day=day,
+                                                   timestamp=datetime.now())
+                    for pos, player in enumerate((holders + substitutes), 1):
+                        LineupsPlayers.objects.create(
+                            position=pos, lineup=lineup, player=player)
+
+            messages.add_message(request, messages.SUCCESS,'Lineup uploaded!')
+            return redirect('team_details', team_id)
+    else:
+        form = UploadLineupForm(initial={'players': players, 'team': team,
+                                         'modules': modules})
+    return render(request, 'fantalega/upload_lineup.html',
+                  {'form': form, 'players': players, 'team': team})

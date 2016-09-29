@@ -1,0 +1,14 @@
+{% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
+
+{% block content %}
+    <h1>Upload lineup for <font color="green">{{ team.name }}</font></h1>
+    <form method="POST" class="form">
+		{% csrf_token %}
+        {% bootstrap_form form %}
+            {% buttons %}
+                <button type="submit" class="btn btn-primary">
+                {% bootstrap_icon "save" %} save
+			{% endbuttons %}
+    </form>
+{% endblock %}

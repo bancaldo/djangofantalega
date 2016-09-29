@@ -27,4 +27,8 @@ urlpatterns = [
         views.vote, name='vote'),
     url(r'^leagues/(?P<league_id>[0-9]+)/upload$', views.upload_votes,
         name='upload_votes'),
+    url(r'^teams/(?P<team_id>[0-9]+)/lineup/upload$', views.upload_lineup,
+        name='upload_lineup'),
+    url(r'^teams/(?P<team_id>[0-9]+)/lineup/(?P<day>[0-9]+)/$',
+        views.lineup_details, name='lineup_details'),
 ]
