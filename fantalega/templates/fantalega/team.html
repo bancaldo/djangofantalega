@@ -1,57 +1,69 @@
 {% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
 
 {% block content %}
-	<font face="Arial">
 		<h1><font color="green">{{ team.name }}</font></h1>
-		<br>
-		budget:               <b><font color="blue">{{ team.budget }}</font><br></b>
-		trade remaining:      <b><font color="blue">{{ team.max_trades }}</font><br></b>
-	</font>
-    <br>
-
-    <b><font color="orange">Players:</font></b><br>
-
     <table class="table table-striped" width="40%">
       <tr>
-          <th>code</th>
-          <th>player name</th>
-          <th>real team</th>
-          <th>cost</th>
+          <th>budget</th>
+          <th>trade remaining</th>
       </tr>
-          {% for player in team.player_set.all %}
       <tr>
-              <td>{{ player.code }}</td>
-              <td><a href="{% url 'player_details' player.id %}">
-                  {{ player.name }}</a></td>
-              <td>{{ player.real_team }}</td>
-              <td>{{ player.cost }}</td>
+              <td>{{ team.budget }}</td>
+              <td>{{ team.max_trades }}</td>
       </tr>
-          {% endfor %}
     </table>
-
-    <b><font color="orange">Trade operations:</font></b><br>
-    <table class="table table-striped" width="40%">
-      <tr>
-          <th>IN/OUT</th>
-          <th>player name</th>
-      </tr>
-          {% for trade in team.trade_set.all %}
-      <tr>
-              <td>{{ trade.direction }}</td>
-              <td><a href="{% url 'player_details' trade.player.id %}">
-                  {{ trade.player.name }}</a></td>
-      </tr>
-          {% endfor %}
-    </table>
-
-      <b><a href="{% url 'trade' team.id %}">New trade operation...</a></b>
-
-    <br>
-    <b><a href="{% url 'upload_lineup' team.id %}">Lineups</a></b>
-    <ul>
-      {% for lineup in teams.team_lineups.all %}
-          <li><a href="{% url 'lineup_details' team.id day %}">lineup day:
-              {{ lineup.day }}</a></li>
-      {% endfor %}
-    </ul>
+        <div id="container" style="width:100%;">
+            <div id="left" style="float:left; width:50%;">
+                <b><font color="orange">Players:</font></b><br>
+                <table class="table table-striped" width="40%">
+                  <tr>
+                      <th>code</th>
+                      <th>player name</th>
+                      <th>real team</th>
+                      <th>cost</th>
+                  </tr>
+                      {% for player in team.player_set.all %}
+                  <tr>
+                          <td>{{ player.code }}</td>
+                          <td><a href="{% url 'player_details' player.id %}">
+                              {{ player.name }}</a></td>
+                          <td>{{ player.real_team }}</td>
+                          <td>{{ player.cost }}</td>
+                  </tr>
+                      {% endfor %}
+                </table>
+            </div>
+            <div id="right" style="float:right; width:50%;">
+                <b><font color="orange">Trade operations:</font></b><br>
+                <table class="table table-striped" width="40%">
+                  <tr>
+                      <th>IN/OUT</th>
+                      <th>player name</th>
+                  </tr>
+                      {% for trade in team.trade_set.all %}
+                  <tr>
+                          <td>{{ trade.direction }}</td>
+                          <td><a href="{% url 'player_details' trade.player.id %}">
+                              {{ trade.player.name }}</a></td>
+                  </tr>
+                      {% endfor %}
+                </table>
+                <form action="#" method="get">
+                 <input type="submit" class="btn" value="new trade"
+                        name="new trade">
+                </form>
+                <b><font color="orange">Team lineups:</font></b><br>
+                  {% for lineup in team.team_lineups.all %}
+                    <ul>
+                      <li><a href="{% url 'lineup_details' team.id lineup.day %}">lineup day:
+                          {{ lineup.day }}</a></li>
+                    </ul>
+                  {% endfor %}
+                <form action="#" method="get">
+                 <input type="submit" class="btn" value="new lineup"
+                        name="new lineup">
+                </form>
+            </div>
+        </div>
 {% endblock %}

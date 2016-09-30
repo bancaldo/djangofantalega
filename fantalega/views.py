@@ -25,6 +25,10 @@ def league_details(request, league_id):
     teams = league.team_set.all()
     days = [d['day'] for d in
             Evaluation.objects.order_by('day').values('day').distinct()]
+    if request.GET.get('auction'):
+        return redirect('auction', league.id)
+    if request.GET.get('calendar'):
+        return redirect('calendar', league.id)
     context = {'league': league, 'teams': teams, 'days': days}
     return render(request, 'fantalega/league.html', context)
 
@@ -38,6 +42,10 @@ def teams(request):
 def team_details(request, team_id):
     team = Team.objects.get(id=int(team_id))
     context = {'team': team}
+    if(request.GET.get('new lineup')):
+        return redirect('upload_lineup', team.id)
+    if(request.GET.get('new trade')):
+        return redirect('trade', team.id)
     return render(request, 'fantalega/team.html', context)
 
 
@@ -199,11 +207,16 @@ def upload_votes(request, league_id):
 
 def lineup_details(request, team_id, day):
     team = Team.objects.get(pk=team_id)
-    lineup = team.team_lineups.filter(day=1).first()
+    offset = team.leagues.all()[0].offset
+    lineup = team.team_lineups.filter(day=int(day)).first()
     players = LineupsPlayers.get_sorted_lineup(lineup)
-    holders = players[:12]
-    substitutes = players[12:]
-    context = {'team': team, 'holders': holders, 'substitutes': substitutes}
+    holders = [l_p.player for l_p in players[:11]]
+    substitutes = [s_p.player for s_p in players[11:]]
+    d_votes = {code: (fv, v) for code, fv, v in
+               [Evaluation.get_evaluations(day=(int(day) + offset),
+                                           code=p.code) for p in holders]}
+    context = {'team': team, 'holders': holders, 'substitutes': substitutes,
+               'lineup': lineup, 'day': day, 'd_votes': d_votes}
     return render(request, 'fantalega/lineup.html', context)
 
 
@@ -238,11 +251,18 @@ def upload_lineup(request, team_id):
                     for pos, player in enumerate((holders + substitutes), 1):
                         LineupsPlayers.objects.create(
                             position=pos, lineup=lineup, player=player)
-
-            messages.add_message(request, messages.SUCCESS,'Lineup uploaded!')
-            return redirect('team_details', team_id)
+                messages.add_message(request, messages.SUCCESS,
+                                     'Lineup uploaded!')
+                return redirect('team_details', team_id)
     else:
         form = UploadLineupForm(initial={'players': players, 'team': team,
                                          'modules': modules})
     return render(request, 'fantalega/upload_lineup.html',
                   {'form': form, 'players': players, 'team': team})
+
+
+def matches(request, league_id):
+    league = League.objects.get(id=int(league_id))
+    d_calendar = Match.calendar_to_dict(league)
+    context = {'league': league, 'd_calendar': d_calendar}
+    return render(request, 'fantalega/matches.html', context)

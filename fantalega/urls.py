@@ -31,4 +31,8 @@ urlpatterns = [
         name='upload_lineup'),
     url(r'^teams/(?P<team_id>[0-9]+)/lineup/(?P<day>[0-9]+)/$',
         views.lineup_details, name='lineup_details'),
+    url(r'^leagues/(?P<league_id>[0-9]+)/matches$', views.matches,
+        name='matches'),
+#    url(r'^leagues/(?P<league_id>[0-9]+)/matches/(?P<day>[0-9]+)/$',
+#        views.match_detail, name='match_detail'),
 ]

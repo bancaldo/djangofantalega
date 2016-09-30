@@ -138,6 +138,19 @@ class Match (models.Model):
         return "[%s] %s - %s" % (self.day, self.home_team.name,
                                  self.visit_team.name)
 
+    @staticmethod
+    def calendar_to_dict(league):
+        matches = league.matches.all()
+        d = {match.day: [] for match in matches}
+        for match in matches:
+            day = match.day
+            home = match.home_team
+            visit = match.visit_team
+            values = d[day]
+            values.append(home)
+            values.append(visit)
+        return d
+
 
 class Evaluation(models.Model):
     league = models.ForeignKey(League, related_name='league_votes')
@@ -149,6 +162,20 @@ class Evaluation(models.Model):
 
     def __str__(self):
         return "[%s] %s" % (self.day, self.player.name)
+
+    @staticmethod
+    def get_evaluations(day, code):
+        """get_evaluations(self, day, code) -> fanta_value, net_value
+           code: Player.code
+           day: lineup.day + league.offset
+        """
+        player = Player.objects.filter(code=int(code)).first()
+        evaluation = Evaluation.objects.filter(day=day, player=player).first()
+        if evaluation and player:
+            return code, evaluation.fanta_value, evaluation.net_value
+        else:
+            return code, None, None
+
 
     @staticmethod
     def upload(path, day, league):

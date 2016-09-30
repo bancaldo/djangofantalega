@@ -1,10 +1,9 @@
 {% extends 'fantalega/base.html' %}
-
+{% load bootstrap3 %}
 
 {% block content %}
-    <font face="Arial">
-        <h1><font color="green">List of all matches for</font>
-                <font color="green">{{ league.name }}</font></h1>
+    <h1>List of all matches for <font color="green">
+        {{ league.name }}</font></h1>
 
     {% if matches %}
     <ul>
@@ -14,5 +13,5 @@
     </ul>
     {% else %}
       <p>No calendar found.</p>
-    {% endif %}</font>
+    {% endif %}
 {% endblock %}

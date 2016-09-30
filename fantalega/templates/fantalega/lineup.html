@@ -1,56 +1,60 @@
 {% extends 'fantalega/base.html' %}
 
 {% block content %}
-	<font face="Arial">
-		<h1><font color="green">Lineup {{ team.name }} day {{ lineup.day }}</font></h1>
-	</font>
-    <br>
+	<h1>Lineup <font color="green">{{ team.name }}</font>
+        day: <font color="red">{{ day }}</font><br></h1>
 
-    <b><font color="orange">holders:</font></b><br>
+        <div id="container" style="width:100%;">
+            <div id="left" style="float:left; width:40%;">
+                <b><font color="orange">holders:</font></b><br>
 
-    <table class="table table-striped" width="40%">
-      <tr>
-          <th>code</th>
-          <th>player name</th>
-          <th>real team</th>
-          <th>role</th>
-          <th>fv</th>
-          <th>v</th>
-      </tr>
-          {% for player in holders %}
-      <tr>
-              <td>{{ player.code }}</td>
-              <td><a href="{% url 'player_details' player.id %}">
-                  {{ player.name }}</a></td>
-              <td>{{ player.real_team }}</td>
-              <td>{{ player.role }}</td>
-              <td>to do</td>
-              <td>to do</td>
-      </tr>
-          {% endfor %}
-    </table>
+                <table class="table table-striped">
+                  <tr>
+                      <th>code</th>
+                      <th>player name</th>
+                      <th>real team</th>
+                      <th>role</th>
+                      <th>fv</th>
+                      <th>v</th>
+                  </tr>
+                      {% for player in holders %}
+                  <tr>
+                          <td>{{ player.code }}</td>
+                          <td><a href="{% url 'player_details' player.id %}">
+                              {{ player.name }}</a></td>
+                          <td>{{ player.real_team }}</td>
+                          <td>{{ player.role }}</td>
+                          <td>-</td>
+                          <td>-</td>
+                  </tr>
+                      {% endfor %}
+                </table>
+            </div>
+            <div id="right" style="float:right; width:40%;">
+                <b><font color="orange">substitutes:</font></b><br>
 
-    <b><font color="orange">substitutes:</font></b><br>
+                <table class="table table-striped">
+                  <tr>
+                      <th>code</th>
+                      <th>player name</th>
+                      <th>real team</th>
+                      <th>role</th>
+                      <th>fv</th>
+                      <th>v</th>
+                  </tr>
+                      {% for player in substitutes %}
+                  <tr>
+                          <td>{{ player.code }}</td>
+                          <td><a href="{% url 'player_details' player.id %}">
+                              {{ player.name }}</a></td>
+                          <td>{{ player.real_team }}</td>
+                          <td>{{ player.role }}</td>
+                          <td>-</td>
+                          <td>-</td>
+                  </tr>
+                      {% endfor %}
+                </table>
+            </div>
+        </div>
 
-    <table class="table table-striped" width="40%">
-      <tr>
-          <th>code</th>
-          <th>player name</th>
-          <th>real team</th>
-          <th>role</th>
-          <th>fv</th>
-          <th>v</th>
-      </tr>
-          {% for player in substitutes %}
-      <tr>
-              <td>{{ player.code }}</td>
-              <td><a href="{% url 'player_details' player.id %}">
-                  {{ player.name }}</a></td>
-              <td>{{ player.real_team }}</td>
-              <td>{{ player.role }}</td>
-              <td>to do</td>
-              <td>to do</td>
-      </tr>
-          {% endfor %}
-    </table>
 {% endblock %}

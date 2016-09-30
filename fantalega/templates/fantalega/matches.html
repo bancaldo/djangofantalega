@@ -1,0 +1,31 @@
+{% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
+
+{% block content %}
+    <h1>List of all matches for
+        <font color="green">{{ league.name }}</font>
+    </h1>
+
+    <table class="table table-striped" width="100%">
+    {% if d_calendar %}
+      {% for key, value in d_calendar.items %}
+              <tr>
+                  <th colspan="2">giornata {{ key }}</th>
+              </tr>
+              <tr><td>{{ value.0.name }}</td>
+                  <td>{{ value.1.name }}</td></tr>
+              <tr><td align="left">{{ value.2.name }}</td>
+                  <td align="left">{{ value.3.name }}</td></tr>
+              <tr><td align="left">{{ value.4.name }}</td>
+                  <td align="left">{{ value.5.name }}</td></tr>
+              <tr><td align="left">{{ value.6.name }}</td>
+                  <td align="left">{{ value.7.name }}</td></tr>
+              <tr><td align="left">{{ value.8.name }}</td>
+                  <td align="left">{{ value.9.name }}</td></tr>
+      {% endfor %}
+    </table>
+
+    {% else %}
+      <p>No calendar found.</p>
+    {% endif %}
+{% endblock %}

@@ -1,37 +1,56 @@
 {% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
 
 {% block content %}
-	<font face="Arial">
 		<h1><font color="green">{{ league.name }}</font></h1>
-		<br>
-		budget:               <b><font color="blue">{{ league.budget }}</font><br></b>
-		max trade operations: <b><font color="blue">{{ league.max_trades }}</font><br></b>
-		max team goalkeepers: <b><font color="blue">{{ league.max_goalkeepers }}</font><br></b>
-		max team defenders:   <b><font color="blue">{{ league.max_defenders }}</font><br></b>
-		max team midfielders: <b><font color="blue">{{ league.max_midfielders }}</font><br></b>
-		max team forwards:    <b><font color="blue">{{ league.max_forwards }}</font><br></b>
-		rounds to do:         <b><font color="blue">{{ league.rounds }}</font><br></b>
-		offset:               <b><font color="blue">{{ league.offset }}</font><br></b>
-	</font>
-    <br>
-    <br>
-    <b><font color="orange">League Teams:</font></b>
-    <ul>
-      {% for team in teams %}
-      <li><a href="{% url 'team_details' team.id %}">{{ team.name }}</a></li>
-      {% endfor %}
-    </ul>
 
-    <b><a href="{% url 'auction' league.id %}">Auction...</a></b>
-    <br>
-    <br>
-    <b><a href="{% url 'upload_votes' league.id %}">upload votes</a></b>
-    <br>
-    <br>
-      {% for day in days %}
-      <li><a href="{% url 'vote' league.id day %}">Evaluation day: {{ day }}</a></li>
-      {% endfor %}
-    <br>
-    <br>
-    <b><a href="{% url 'calendar' league.id %}">Create Calendar</font></a></b>
+    <table class="table table-striped" width="40%">
+      <tr>
+          <th>budget</th>
+          <th>max trade remaining</th>
+          <th>max goalkeepers</th>
+          <th>max defenders</th>
+          <th>max midfielders</th>
+          <th>max forwards</th>
+          <th>rounds to do</th>
+          <th>offset</th>
+      </tr>
+      <tr>
+              <td>{{ league.budget }}</td>
+              <td>{{ league.max_trades }}</td>
+              <td>{{ league.max_goalkeepers }}</td>
+              <td>{{ league.max_defenders }}</td>
+              <td>{{ league.max_midfielders }}</td>
+              <td>{{ league.max_forwards }}</td>
+              <td>{{ league.rounds }}</td>
+              <td>{{ league.offset }}</td>
+      </tr>
+    </table>
+        <div id="container" style="width:100%;">
+            <div id="left" style="float:left; width:50%;">
+                <b><font color="orange">League Teams:</font></b>
+                <ul>
+                  {% for team in teams %}
+                  <li><a href="{% url 'team_details' team.id %}">
+                      {{ team.name }}</a></li>
+                  {% endfor %}
+                </ul>
+                <form action="#" method="get">
+                  <input type="submit" class="btn" value="Start Auction"
+                        name="auction">
+                  <input type="submit" class="btn" value="Create Calendar"
+                        name="calendar">
+                </form>
+            </div>
+            <div id="right" style="float:right; width:50%;">
+                <b><font color="orange">Evaluation uploaded</font></b>
+                <ul>
+                  {% for day in days %}
+                  <li><a href="{% url 'vote' league.id day %}">
+                      Evaluation day: {{ day }}</a></li>
+                  {% endfor %}
+                </ul>
+                <b><a href="{% url 'matches' league.id %}">view calendar</a></b>
+            </div>
+        </div>
 {% endblock %}
