@@ -1,4 +1,5 @@
 {% extends 'fantalega/base.html' %}
+{% load app_filters %}
 
 {% block content %}
 	<h1>Lineup <font color="green">{{ team.name }}</font>
@@ -21,7 +22,7 @@
                   <tr>
                           <td>{{ player.code }}</td>
                           <td><a href="{% url 'player_details' player.id %}">
-                              {{ player.name }}</a></td>
+                              {{ player.name|downize }}</a></td>
                           <td>{{ player.real_team }}</td>
                           <td>{{ player.role }}</td>
                           <td>-</td>
