@@ -2,7 +2,7 @@
 {% load bootstrap3 %}
 
 {% block content %}
-    <b>Upload lineup for <font color="red">{{ team.name }}</font></b>
+    <b>Change lineup for <font color="red">{{ team.name }}</font></b>
     <form method="POST" class="form">
 		{% csrf_token %}
         <div id="container" style="width:100%;">
@@ -28,7 +28,7 @@
         <div>
             {% buttons %}
                 <button type="submit" class="btn btn-primary">
-                    {% bootstrap_icon "save" %} upload
+                    {% bootstrap_icon "save" %} change
                 </button>
 			{% endbuttons %}
         </div>

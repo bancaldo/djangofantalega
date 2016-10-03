@@ -54,7 +54,7 @@
                         name="new trade">
                 </form>
                 <b><font color="orange">Team lineups:</font></b><br>
-                  {% for lineup in team.team_lineups.all %}
+                  {% for lineup in lineups %}
                     <ul>
                       <li><a href="{% url 'lineup_details' team.id lineup.day %}">lineup day:
                           {{ lineup.day }}</a></li>

@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 # noinspection PyUnresolvedReferences
 from django.db import models
 
-
 class League(models.Model):
     name = models.CharField(max_length=32)
     budget = models.IntegerField()

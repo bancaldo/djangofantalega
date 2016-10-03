@@ -39,12 +39,6 @@ class UploadVotesForm(forms.Form):
     file_in = forms.FileField()
 
 
-
-#class HorizontalRadioRenderer(forms.RadioSelect.renderer):
-#    def render(self):
-#        return mark_safe(u'\n'.join([u'%s\n' % w for w in self]))
-
-
 class UploadLineupForm(forms.Form):
     def __init__(self, *args, **kwargs):
         dict_values = kwargs.pop('initial')
@@ -52,11 +46,7 @@ class UploadLineupForm(forms.Form):
         self.fields['module'] = forms.ChoiceField(label=u'module',
                                                choices=dict_values['modules'],
                                                widget=forms.Select())
-        self.fields['day'] = forms.IntegerField()
-#        for n in range(1, 12):
-#            self.fields['holder_%s' % n] = forms.ChoiceField(
-#                label=u'holder %s' % n, choices=dict_values['players'],
-#                widget=forms.Select(), required=False)
+        self.fields['day'] = forms.IntegerField(initial=dict_values['day'])
         self.fields['holders'] = forms.MultipleChoiceField(
                                         choices=dict_values['players'],
                                         widget=forms.CheckboxSelectMultiple())
@@ -64,6 +54,7 @@ class UploadLineupForm(forms.Form):
             self.fields['substitute_%s' % n] = forms.ChoiceField(
                 label=u'substitute %s' % n, choices=dict_values['players'],
                 widget=forms.Select(), required=False)
+
 
     def check_holders(self):
             error = ''
@@ -81,7 +72,6 @@ class UploadLineupForm(forms.Form):
             forwarders = len([code for code in data if int(code) > 800 ])
             if goalkeepers > 1:
                 return "To many goalkeepers!"
-#                raise forms.ValidationError("To many goalkeepers!")
             if defenders != int(mod_defs):
                 return "number of defenders doesn't match module!"
             if midfielders != int(mod_mids):

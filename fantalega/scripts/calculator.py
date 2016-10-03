@@ -1,4 +1,4 @@
-from ..models import Evaluation
+from fantalega.models import Evaluation
 
 
 class BadInputError(Exception):
@@ -93,9 +93,9 @@ def lineups_data(goals_a, goals_b):
 
 
 
-class Calculator(object):
+class LineupHandler(object):
     """Handler for lineup players evauations"""
-    def __init__(self, lineup, day, offset=1):
+    def __init__(self, lineup, day, offset=0):
         """
         Calculator(lineup, day, offset)
 
@@ -107,8 +107,8 @@ class Calculator(object):
         """
         self.offset = offset
         self.lineup = lineup
-        self.eleven = self.lineup.get_players_by_position()[:11]
-        self.substitutes = self.lineup.get_players_by_position()[11:]
+        self.holders = self.lineup.players.all()[:11]
+        self.substitutes = self.lineup.players.all()[11:]
         self.day = int(day) + self.offset
         self.evaluated = []
         self.not_evaluated = []
@@ -116,23 +116,44 @@ class Calculator(object):
         self.chosen = []
         self.iterable = []
         self.pts = 0.0
+        self.holders_total = 0.0
 
-    def calculate_pts_lineup(self):
-        """
-        calculate_pts_lineup(self) -> res, dict
+    def calc_holders_total(self):
+        self.holders_total = 0.0
+        self.evaluated = []
+        self.not_evaluated = []
+        for player in self.holders:
+            evaluation = Evaluation.objects.filter(player=player,
+                                        day=self.day).first()
+            # print "%s -> %s" % (player.name, evaluation.fanta_value)
+            self.holders_total += evaluation.fanta_value
+            if not evaluation.fanta_value == 0.0:
+                self.evaluated.append((player, evaluation))
+            else:
+                self.not_evaluated.append(player)
+        return self.holders_total
 
-        Calculate lineup pts
+    def get_same_role_subs(self, role):
+        availables = [p for p in self.substitutes if p.role == role]
+        for player in availables:
+            print player
+            fv = Evaluation.objects.filter(player=player, day=self.day).first()
+            print fv.fanta_value
+            if fv.fanta_value > 0.0:
+                self.chosen.append((player, fv))
+        return None, None
 
-        :return res: float lineup total result
-        :return dv: dict Player.name: Evaluation.fanta_value
-        """
-        for player in self.eleven:
-            evaluation = Evaluation.query.filter_by(player=player,
+    def calculate_pts(self):
+        """calculate_pts(self) -> res, dict"""
+        res = 0
+        self.evaluated = []
+        self.not_evaluated = []
+        for player in self.holders:
+            evaluation = Evaluation.objects.filter(player=player,
                                         day=self.day).first()
             if not evaluation.net_value == 0.0:
                 self.evaluated.append((player, evaluation))
             else:
-                # it stops to append substitutions after the third one
                 self.not_evaluated.append(player)
         # if the evaluated players length is 11 (no substitutions), it returns
         # the fanta_values sum
@@ -153,6 +174,9 @@ class Calculator(object):
         dv = {item[0].name: item[1].fanta_value for item in self.evaluated}
         return res, dv
 
+
+
+
     def _filter_evaluated_subs(self):
         """
         _filter_evaluated_subs(self) -> list of Player objects
@@ -163,9 +187,9 @@ class Calculator(object):
         """
         evaluated_subs = []
         for substitute in self.substitutes:
-            evaluation = Evaluation.query.filter_by(player=substitute,
+            evaluation = Evaluation.objects.filter(player=substitute,
                                     day=self.day).first()
-            if evaluation.net_value > 0.0:
+            if evaluation.fanta_value > 0.0:
                 evaluated_subs.append((substitute, evaluation))
         return evaluated_subs
 
@@ -174,7 +198,7 @@ class Calculator(object):
         _get_substitutes(self) -> list di object Player
 
         Get substitutes, if possible, between the evaluated substitutes,
-        if the eleven player is not evaluated and the substitutions to do are 3.
+        if the holders player is not evaluated and the substitutions to do are 3.
 
         :return self.chosen: list of Player objects
         """
@@ -326,10 +350,17 @@ class Calculator(object):
     def get_pts(self):
         """
         get_pts(self) -> int
-
-        Call calculate_pts_lineup method and return the goal number
-
-        :return: int lineup pts
         """
-        self.calculate_pts_lineup()
+        self.calculate_pts()
         return self.pts
+
+
+def pts_calculator(lineup, day, offset):
+    lh = LineupHandler(lineup, day, offset)
+    lh.calc_holders_total()
+    for p in lh.not_evaluated:
+        lh.get_same_role_subs(p.role)
+    evaluated_lineup = lh.evaluated + lh.chosen
+    total = sum([ev.fanta_value for player, ev in evaluated_lineup])
+    return total
+

@@ -4,7 +4,6 @@
 {% block content %}
 	<h1>Lineup <font color="green">{{ team.name }}</font>
         day: <font color="red">{{ day }}</font><br></h1>
-
         <div id="container" style="width:100%;">
             <div id="left" style="float:left; width:40%;">
                 <b><font color="orange">holders:</font></b><br>
@@ -22,14 +21,22 @@
                   <tr>
                           <td>{{ player.code }}</td>
                           <td><a href="{% url 'player_details' player.id %}">
-                              {{ player.name|downize }}</a></td>
+                              {{ player.name }}</a></td>
                           <td>{{ player.real_team }}</td>
                           <td>{{ player.role }}</td>
-                          <td>-</td>
-                          <td>-</td>
+                          <td>{{ player|get_fvote:day }}</td>
+                          <td>{{ player|get_vote:day }}</td>
                   </tr>
                       {% endfor %}
                 </table>
+                <form action="#" method="get">
+                 <input type="submit" class="btn" value="modify lineup"
+                        name="modify lineup">
+                </form>
+                <form action="#" method="get">
+                 <input type="submit" class="btn" value="calculate"
+                        name="calculate">
+                </form>
             </div>
             <div id="right" style="float:right; width:40%;">
                 <b><font color="orange">substitutes:</font></b><br>
@@ -50,12 +57,14 @@
                               {{ player.name }}</a></td>
                           <td>{{ player.real_team }}</td>
                           <td>{{ player.role }}</td>
-                          <td>-</td>
-                          <td>-</td>
+                          <td>{{ player|get_fvote:day }}</td>
+                          <td>{{ player|get_vote:day }}</td>
                   </tr>
                       {% endfor %}
                 </table>
             </div>
+
+
         </div>
 
 {% endblock %}

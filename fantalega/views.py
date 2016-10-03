@@ -7,6 +7,7 @@ from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
 from django.contrib import messages
 from fantalega.scripts.calendar import create_season
 from datetime import datetime
+from fantalega.scripts.calculator import pts_calculator
 
 
 # Create your views here.
@@ -41,10 +42,11 @@ def teams(request):
 
 def team_details(request, team_id):
     team = Team.objects.get(id=int(team_id))
-    context = {'team': team}
-    if(request.GET.get('new lineup')):
+    lineups = team.team_lineups.order_by('day')
+    context = {'team': team, 'lineups': lineups}
+    if request.GET.get('new lineup'):
         return redirect('upload_lineup', team.id)
-    if(request.GET.get('new trade')):
+    if request.GET.get('new trade'):
         return redirect('trade', team.id)
     return render(request, 'fantalega/team.html', context)
 
@@ -77,7 +79,7 @@ def auction(request, league_id):
             team = Team.objects.get(pk=team_id)
             remaining_players = league.max_players() - team.player_set.count()
             budget_remaining = int(team.budget) - int(auction_value) - \
-                               remaining_players
+                remaining_players
             if budget_remaining > 0:
                 player.team = team
                 player.auction_value = auction_value
@@ -85,8 +87,8 @@ def auction(request, league_id):
                 team.budget -= auction_value
                 team.save()
                 messages.add_message(request, messages.SUCCESS,
-                    'Auction operation [ %s - %s ] stored!' % (player.name,
-                                                               team.name))
+                                     'Auction operation [ %s - %s ] stored!' %
+                                     (player.name, team.name))
             else:
                 messages.add_message(request, messages.ERROR,
                     "Not enough budget: budget: %s, auction price %s, "
@@ -101,7 +103,7 @@ def auction(request, league_id):
 
 def trade(request, team_id):
     team = Team.objects.get(pk=int(team_id))
-    players = [(p.code, "%s - %s" %(p.name, p.role))
+    players = [(p.code, "%s - %s" % (p.name, p.role))
                for p in team.player_set.all()]
     others = [(p.code, "%s - %s" % (p.name, p.role))
                for p in Player.objects.order_by('name')if p.team]
@@ -197,7 +199,7 @@ def upload_votes(request, league_id):
             day = form.cleaned_data['day']
             file_in = request.FILES['file_in']
             Evaluation.upload(path=file_in, day=day, league=league)
-            messages.add_message(request, messages.SUCCESS,'votes uploaded!')
+            messages.add_message(request, messages.SUCCESS, 'votes uploaded!')
             return redirect('league_details', league.id)
     else:
         form = UploadVotesForm()
@@ -215,12 +217,19 @@ def lineup_details(request, team_id, day):
     d_votes = {code: (fv, v) for code, fv, v in
                [Evaluation.get_evaluations(day=(int(day) + offset),
                                            code=p.code) for p in holders]}
+    if request.GET.get('modify lineup'):
+        return redirect('lineup_edit', team.id, day)
+    if request.GET.get('calculate'):
+        total = pts_calculator(lineup, day, offset)
+        print total
+#        return redirect('upload_lineup', team.id)
+
     context = {'team': team, 'holders': holders, 'substitutes': substitutes,
                'lineup': lineup, 'day': day, 'd_votes': d_votes}
     return render(request, 'fantalega/lineup.html', context)
 
 
-def upload_lineup(request, team_id):
+def upload_lineup(request, team_id, day=None):
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
     team = Team.objects.get(pk=int(team_id))
@@ -228,7 +237,8 @@ def upload_lineup(request, team_id):
                for p in team.player_set.all()]
     if request.method == "POST":
         form = UploadLineupForm(request.POST,
-            initial={'players': players, 'team': team, 'modules': modules})
+            initial={'players': players, 'team': team, 'modules': modules,
+                     'day': day})
         if form.is_valid():
             day = form.cleaned_data['day']
             module_id = form.cleaned_data['module']
@@ -256,8 +266,55 @@ def upload_lineup(request, team_id):
                 return redirect('team_details', team_id)
     else:
         form = UploadLineupForm(initial={'players': players, 'team': team,
-                                         'modules': modules})
+                                         'modules': modules, 'day': day})
     return render(request, 'fantalega/upload_lineup.html',
+                  {'form': form, 'players': players, 'team': team})
+
+
+def lineup_edit(request, team_id, day):
+    modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
+               (6, '532'), (7, '541')]
+    team = Team.objects.get(pk=int(team_id))
+    lineup = team.team_lineups.filter(day=day).first()
+    players = [(p.code, "%s [%s]" %(p.name, p.role))
+               for p in team.player_set.all()]
+    if request.method == "POST":
+        form = UploadLineupForm(request.POST,
+            initial={'players': players, 'team': team, 'modules': modules,
+                     'day': day})
+        if form.is_valid():
+            day = form.cleaned_data['day']
+            module_id = form.cleaned_data['module']
+            module = dict(form.fields['module'].choices)[int(module_id)]
+            holders = [Player.get_by_code(int(code)) for code in
+                       form.cleaned_data['holders']]
+            substitutes = [Player.get_by_code(int(code)) for code in
+                           [form.cleaned_data['substitute_%s' % n]
+                            for n in range(1, 11)]]
+            error = form.check_holders()
+            if error:
+                messages.add_message(request, messages.ERROR, error)
+            else:
+                messages.add_message(request, messages.SUCCESS,
+                                     "Lineup correct!")
+                lineup.timestamp = datetime.now()
+                lineup.save()
+                for pos, player in enumerate((holders + substitutes), 1):
+                    lu = LineupsPlayers.objects.filter(
+                        lineup=lineup, position=int(pos)).first()
+                    lu.player = player
+                    lu.save()
+                    print "[INFO] Lineup %s (%s) -> Player %s pos %s upgraded!"\
+                          % (team.name, day, player.name, pos)
+
+                messages.add_message(request, messages.SUCCESS,
+                                     'Lineup upgraded!')
+                return redirect('team_details', team_id)
+    else:
+        form = UploadLineupForm(initial={'players': players, 'team': team,
+                                         'modules': modules, 'day': day})
+
+    return render(request, 'fantalega/lineup_edit.html',
                   {'form': form, 'players': players, 'team': team})
 
 
