@@ -24,8 +24,8 @@
                               {{ player.name }}</a></td>
                           <td>{{ player.real_team }}</td>
                           <td>{{ player.role }}</td>
-                          <td>{{ player|get_fvote:day }}</td>
-                          <td>{{ player|get_vote:day }}</td>
+                          <td>{{ player|get_fvote:fantaday }}</td>
+                          <td>{{ player|get_vote:fantaday }}</td>
                   </tr>
                       {% endfor %}
                 </table>
@@ -57,8 +57,8 @@
                               {{ player.name }}</a></td>
                           <td>{{ player.real_team }}</td>
                           <td>{{ player.role }}</td>
-                          <td>{{ player|get_fvote:day }}</td>
-                          <td>{{ player|get_vote:day }}</td>
+                          <td>{{ player|get_fvote:fantaday }}</td>
+                          <td>{{ player|get_vote:fantaday }}</td>
                   </tr>
                       {% endfor %}
                 </table>

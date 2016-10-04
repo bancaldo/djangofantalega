@@ -210,6 +210,7 @@ def upload_votes(request, league_id):
 def lineup_details(request, team_id, day):
     team = Team.objects.get(pk=team_id)
     offset = team.leagues.all()[0].offset
+    fantaday = int(day) + int(offset)
     lineup = team.team_lineups.filter(day=int(day)).first()
     players = LineupsPlayers.get_sorted_lineup(lineup)
     holders = [l_p.player for l_p in players[:11]]
@@ -225,7 +226,8 @@ def lineup_details(request, team_id, day):
 #        return redirect('upload_lineup', team.id)
 
     context = {'team': team, 'holders': holders, 'substitutes': substitutes,
-               'lineup': lineup, 'day': day, 'd_votes': d_votes}
+               'lineup': lineup, 'day': day, 'd_votes': d_votes,
+               'fantaday': fantaday}
     return render(request, 'fantalega/lineup.html', context)
 
 
