@@ -15,7 +15,7 @@ class LineupHandler(object):
         self.available = [p for p in self.substitutes
             if Evaluation.objects.filter(player=p, day=self.lineup.day
                 ).first().fanta_value > 0.0 and p.role != 'goalkeeper']
-        
+
     def get_goalkeeper_substitute(self):
         gks = [p for p in self.substitutes if Evaluation.objects.filter(
                player=p, day=self.lineup.day).first().fanta_value > 0.0 and
@@ -45,7 +45,7 @@ class LineupHandler(object):
         if player.role == 'goalkeeper':
             self.candidate = self.get_goalkeeper_substitute()
         else:
-            print self.available
+            #print self.available
             if self.available:
                 return self.available[0]
 

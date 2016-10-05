@@ -140,9 +140,19 @@ class LineupTestCase(TestCase):
     def test_four_substitutions_with_same_role(self):
         """Check if 4 non-evaluated players are substituted by only 3 ones"""
         for code, vote in ((356, 0.0), (415, 0.0), (510, 0.0), (971, 0.0),
-            (397, 8.0), (220, 4.0), (584, 5.0), (914, 0.0)):
+            (397, 8.0), (220, 4.0), (584, 5.0), (914, 3.0)):
             player = Player.get_by_code(code)
             ev = Evaluation.objects.filter(player=player).first()
             ev.fanta_value = vote
             ev.save()
         self.assertEqual(self.handler.get_pts(), 59)
+
+    def test_one_substitution_of_different_role(self):
+        """Check if 1 non-evaluated player is substituted with
+        different role and changing module"""
+        for code, vote in ((721, 8.0), (220, 0.0), (356, 0.0), (397, 0.0)):
+            player = Player.get_by_code(code)
+            ev = Evaluation.objects.filter(player=player).first()
+            ev.fanta_value = vote
+            ev.save()
+        self.assertEqual(self.handler.get_pts(), 68)
