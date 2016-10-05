@@ -117,6 +117,7 @@ class LineupHandler(object):
         self.iterable = []
         self.pts = 0.0
         self.holders_total = 0.0
+        self.substitution = 0
 
     def calc_holders_total(self):
         self.holders_total = 0.0
@@ -136,11 +137,11 @@ class LineupHandler(object):
     def get_same_role_subs(self, role):
         availables = [p for p in self.substitutes if p.role == role]
         for player in availables:
-            print player
-            fv = Evaluation.objects.filter(player=player, day=self.day).first()
-            print fv.fanta_value
-            if fv.fanta_value > 0.0:
-                self.chosen.append((player, fv))
+            ev = Evaluation.objects.filter(player=player, day=self.day).first()
+            if ev.fanta_value > 0.0 and self.substitution < 4:
+                self.chosen.append((player, ev))
+                self.substitution += 1
+                print player, ev.fanta_value, self.substitution
         return None, None
 
     def calculate_pts(self):
@@ -363,4 +364,3 @@ def pts_calculator(lineup, day, offset):
     evaluated_lineup = lh.evaluated + lh.chosen
     total = sum([ev.fanta_value for player, ev in evaluated_lineup])
     return total
-
