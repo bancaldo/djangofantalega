@@ -2,7 +2,8 @@ from django.test import TestCase
 from fantalega.models import Player, Lineup, Evaluation, League, Team
 from fantalega.models import LeaguesTeams, LineupsPlayers
 from datetime import datetime
-from fantalega.scripts.calcdev import LineupHandler
+from fantalega.scripts.calc import LineupHandler, BadInputError
+from fantalega.scripts.calc import convert_pts_to_goals, get_final
 # Create your tests here.
 
 
@@ -49,7 +50,7 @@ class LineupTestCase(TestCase):
             player = Player.objects.filter(code=code).first()
             LineupsPlayers.objects.create(lineup=self.lineup, player=player,
                                           position=pos)
-        self.handler = LineupHandler(self.lineup)
+        self.handler = LineupHandler(lineup=self.lineup, day=1, offset=0)
 
     def test_holder_and_substitutes(self):
         """Lineup is correctly splitted"""
@@ -64,6 +65,7 @@ class LineupTestCase(TestCase):
         """If no substitutions needed get total from evaluated holders"""
         self.assertEqual(self.handler.get_pts(), sum([val for code, val
                                                       in self.vals[:11]]))
+
     def test_subs_needed(self):
         """Lineup needs substitutions with one ore more holders not evaluated"""
         player = Player.get_by_code(356)
@@ -86,7 +88,7 @@ class LineupTestCase(TestCase):
         ev = Evaluation.objects.filter(player=player).first()
         ev.fanta_value = 0.0
         ev.save()
-        self.assertEqual(self.handler.is_substitute_available(player), True)
+        self.assertEqual(self.handler.is_substitute_available(), True)
 
     def test_if_substitute_has_got_the_same_role(self):
         """Check if a the candidated substitute has got the same role"""
@@ -95,7 +97,7 @@ class LineupTestCase(TestCase):
         ev.fanta_value = 0.0
         ev.save()
         candidate = self.handler.get_same_role_substitute(player)
-        self.assertTrue(player.role==candidate.role)
+        self.assertTrue(player.role == candidate.role)
 
     def test_different_role_substitute(self):
         """Check if a the candidated substitute with different role
@@ -106,7 +108,7 @@ class LineupTestCase(TestCase):
             ev.fanta_value = vote
             ev.save()
         candidate = self.handler.get_substitute(Player.get_by_code(356))
-        self.assertFalse(candidate.role=='goalkeeper')
+        self.assertFalse(candidate.role == 'goalkeeper')
 
     def test_one_substitution(self):
         """Check if 1 non-evaluated player is substituted"""
@@ -119,8 +121,8 @@ class LineupTestCase(TestCase):
 
     def test_two_substitutions_with_same_role(self):
         """Check if 2 non-evaluated players are substituted"""
-        for code, vote in ((356, 0.0), (415, 0.0),
-            (397, 8.0), (220, 7.0)):
+        for code, vote in ((356, 0.0), (415, 0.0),  # holders changes
+                           (397, 8.0), (220, 7.0)):
             player = Player.get_by_code(code)
             ev = Evaluation.objects.filter(player=player).first()
             ev.fanta_value = vote
@@ -130,7 +132,7 @@ class LineupTestCase(TestCase):
     def test_three_substitutions_with_same_role(self):
         """Check if 3 non-evaluated players are substituted"""
         for code, vote in ((356, 0.0), (415, 0.0), (510, 0.0),
-            (397, 8.0), (220, 4.0), (584, 5.0)):
+                           (397, 8.0), (220, 4.0), (584, 5.0)):
             player = Player.get_by_code(code)
             ev = Evaluation.objects.filter(player=player).first()
             ev.fanta_value = vote
@@ -140,7 +142,7 @@ class LineupTestCase(TestCase):
     def test_four_substitutions_with_same_role(self):
         """Check if 4 non-evaluated players are substituted by only 3 ones"""
         for code, vote in ((356, 0.0), (415, 0.0), (510, 0.0), (971, 0.0),
-            (397, 8.0), (220, 4.0), (584, 5.0), (914, 3.0)):
+                           (397, 8.0), (220, 4.0), (584, 5.0), (914, 3.0)):
             player = Player.get_by_code(code)
             ev = Evaluation.objects.filter(player=player).first()
             ev.fanta_value = vote
@@ -156,3 +158,40 @@ class LineupTestCase(TestCase):
             ev.fanta_value = vote
             ev.save()
         self.assertEqual(self.handler.get_pts(), 68)
+
+    def test_one_substitution_of_different_role_not_ammitted_module(self):
+        """Check if 1 non-evaluated player isn't substituted with
+        different role that change module in an invalid one"""
+        for code, vote in ((356, 0.0),  # holder change
+                           (136, 0.0), (413, 0.0), (397, 0.0), (220, 0.0),
+                           (516, 0.0), (721, 0.0), (584, 0.0), (581, 0.0),
+                           (914, 10.0), (865, 0.0)):
+            player = Player.get_by_code(code)
+            ev = Evaluation.objects.filter(player=player).first()
+            ev.fanta_value = vote
+            ev.save()
+        self.assertEqual(self.handler.get_pts(), 60)
+
+
+class PtsTestCase(TestCase):
+    def test_pts_to_goals_raise_if_not_float(self):
+        """Check if not-float input raises Exception"""
+        self.assertRaises(BadInputError, convert_pts_to_goals, 60)
+
+    def test_pts_to_goals(self):
+        """Check if converting pts to goals is correct"""
+        self.assertEqual(convert_pts_to_goals(60.0), 0)
+        self.assertEqual(convert_pts_to_goals(59.0), 0)
+        self.assertEqual(convert_pts_to_goals(66.0), 1)
+        self.assertEqual(convert_pts_to_goals(72.0), 2)
+        self.assertEqual(convert_pts_to_goals(78.0), 3)
+
+    def test_final_result_is_correct(self):
+        """Check if final result is correct"""
+        self.assertEqual(get_final(59.5, 60.0), (0, 1))
+        self.assertEqual(get_final(65.0, 61.0), (1, 0))
+        self.assertEqual(get_final(59.0, 59.5), (1, 1))
+        self.assertEqual(get_final(66.0, 65.5), (1, 0))
+        self.assertEqual(get_final(72.0, 71.5), (2, 1))
+        self.assertEqual(get_final(72.0, 62.0), (3, 0))
+        self.assertEqual(get_final(82.0, 82.0), (3, 3))

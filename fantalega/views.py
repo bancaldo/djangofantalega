@@ -7,7 +7,7 @@ from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
 from django.contrib import messages
 from fantalega.scripts.calendar import create_season
 from datetime import datetime
-from fantalega.scripts.calculator import pts_calculator
+from fantalega.scripts.calc import LineupHandler
 
 
 # Create your views here.
@@ -16,8 +16,7 @@ def index(request):
 
 
 def leagues(request):
-    leagues = League.objects.order_by('-name')  ## - is for descendng order
-    context = {'leagues': leagues,}
+    context = {'leagues': League.objects.order_by('-name')}
     return render(request, 'fantalega/leagues.html', context)
 
 
@@ -53,7 +52,7 @@ def team_details(request, team_id):
 
 def players(request):
     players = Player.objects.order_by('code')
-    context = {'players': players,}
+    context = {'players': players}
     return render(request, 'fantalega/players.html', context)
 
 
@@ -106,7 +105,7 @@ def trade(request, team_id):
     players = [(p.code, "%s - %s" % (p.name, p.role))
                for p in team.player_set.all()]
     others = [(p.code, "%s - %s" % (p.name, p.role))
-               for p in Player.objects.order_by('name')if p.team]
+              for p in Player.objects.order_by('name')if p.team]
     if request.method == "POST":
         form = TradeForm(request.POST, initial={'players': players,
                                                 'others': others})
@@ -158,8 +157,7 @@ def trade(request, team_id):
 
 
 def trades(request):
-    trades = Trade.objects.all()
-    context = {'trades': trades,}
+    context = {'trades': Trade.objects.all()}
     return render(request, 'fantalega/trades.html', context)
 
 
@@ -168,7 +166,7 @@ def calendar(request, league_id):
     matches = league.matches.order_by('day')
     if matches:
         messages.add_message(request, messages.WARNING,
-            'Calendar already exists!!')
+                             'Calendar already exists!!')
     else:
         teams = [t for t in league.team_set.all()]
         cal = create_season(teams=teams, num=league.rounds)
@@ -176,8 +174,7 @@ def calendar(request, league_id):
             day, home_team, visit_team = record
             Match.objects.create(league=league, day=day, home_team=home_team,
                                  visit_team=visit_team)
-        messages.add_message(request, messages.SUCCESS,
-            'Calendar done!')
+        messages.add_message(request, messages.SUCCESS, 'Calendar done!')
         matches = league.matches.order_by('day')
 
     context = {'matches': matches, 'league': league}
@@ -221,9 +218,10 @@ def lineup_details(request, team_id, day):
     if request.GET.get('modify lineup'):
         return redirect('lineup_edit', team.id, day)
     if request.GET.get('calculate'):
-        total = pts_calculator(lineup, day, offset)
-        print total
-#        return redirect('upload_lineup', team.id)
+        handler = LineupHandler(lineup, int(day), int(offset))
+        total = handler.get_pts()
+        #        do stuff with total
+        #        return redirect('upload_lineup', team.id)
 
     context = {'team': team, 'holders': holders, 'substitutes': substitutes,
                'lineup': lineup, 'day': day, 'd_votes': d_votes,
@@ -235,12 +233,12 @@ def upload_lineup(request, team_id, day=None):
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
     team = Team.objects.get(pk=int(team_id))
-    players = [(p.code, "%s [%s]" %(p.name, p.role))
+    players = [(p.code, "%s [%s]" % (p.name, p.role))
                for p in team.player_set.all()]
     if request.method == "POST":
         form = UploadLineupForm(request.POST,
-            initial={'players': players, 'team': team, 'modules': modules,
-                     'day': day})
+                                initial={'players': players, 'team': team,
+                                         'modules': modules, 'day': day})
         if form.is_valid():
             day = form.cleaned_data['day']
             module_id = form.cleaned_data['module']
@@ -278,12 +276,12 @@ def lineup_edit(request, team_id, day):
                (6, '532'), (7, '541')]
     team = Team.objects.get(pk=int(team_id))
     lineup = team.team_lineups.filter(day=day).first()
-    players = [(p.code, "%s [%s]" %(p.name, p.role))
+    players = [(p.code, "%s [%s]" % (p.name, p.role))
                for p in team.player_set.all()]
     if request.method == "POST":
         form = UploadLineupForm(request.POST,
-            initial={'players': players, 'team': team, 'modules': modules,
-                     'day': day})
+                                initial={'players': players, 'team': team,
+                                         'modules': modules, 'day': day})
         if form.is_valid():
             day = form.cleaned_data['day']
             module_id = form.cleaned_data['module']
@@ -315,8 +313,11 @@ def lineup_edit(request, team_id, day):
     else:
         form = UploadLineupForm(initial={'players': players, 'team': team,
                                          'modules': modules, 'day': day})
-
-    return render(request, 'fantalega/lineup_edit.html',
+        for n, player in enumerate(lineup.players.all()[11:], 1):
+            form.fields['substitute_%s' % n].initial = player.code
+        form.fields['holders'].initial = [p.code for p in
+                                          lineup.players.all()[:11]]
+    return render(request, 'fantalega/upload_lineup.html',
                   {'form': form, 'players': players, 'team': team})
 
 
