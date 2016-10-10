@@ -6,22 +6,25 @@
         <font color="green">{{ league.name }}</font>
     </h1>
 
+<input type="submit" class="btn" value="calc results"
+       name="calc results"></input>
     <table class="table table-striped" width="100%">
     {% if d_calendar %}
       {% for key, value in d_calendar.items %}
               <tr>
                   <th colspan="2">giornata {{ key }}</th>
               </tr>
+
               <tr><td>{{ value.0.name }}</td>
-                  <td>{{ value.1.name }}</td></tr>
+                  <td>{{ value.1.name }}</td><td>-</td><td>-</td></tr>
               <tr><td align="left">{{ value.2.name }}</td>
-                  <td align="left">{{ value.3.name }}</td></tr>
+                  <td align="left">{{ value.3.name }}</td><td>-</td><td>-</td></tr>
               <tr><td align="left">{{ value.4.name }}</td>
-                  <td align="left">{{ value.5.name }}</td></tr>
+                  <td align="left">{{ value.5.name }}</td><td>-</td><td>-</td></tr>
               <tr><td align="left">{{ value.6.name }}</td>
-                  <td align="left">{{ value.7.name }}</td></tr>
+                  <td align="left">{{ value.7.name }}</td><td>-</td><td>-</td></tr>
               <tr><td align="left">{{ value.8.name }}</td>
-                  <td align="left">{{ value.9.name }}</td></tr>
+                  <td align="left">{{ value.9.name }}</td><td>-</td><td>-</td></tr>
       {% endfor %}
     </table>
 

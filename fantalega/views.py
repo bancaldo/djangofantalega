@@ -220,6 +220,7 @@ def lineup_details(request, team_id, day):
     if request.GET.get('calculate'):
         handler = LineupHandler(lineup, int(day), int(offset))
         total = handler.get_pts()
+        print total
         #        do stuff with total
         #        return redirect('upload_lineup', team.id)
 
