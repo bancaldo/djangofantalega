@@ -327,3 +327,38 @@ def matches(request, league_id):
     d_calendar = Match.calendar_to_dict(league)
     context = {'league': league, 'd_calendar': d_calendar}
     return render(request, 'fantalega/matches.html', context)
+
+
+def match_details(request, league_id, day):
+    league = League.objects.get(pk=int(day))
+    matches = league.matches.filter(day=int(day))
+    if request.GET.get('calculate'):
+        for match in matches:
+            home_lineup = match.home_team.team_lineups.filter(
+                day=int(day)).first()
+            visit_lineup = match.visit_team.team_lineups.filter(
+                day=int(day)).first()
+            if not home_lineup:
+                messages.add_message(request, messages.ERROR,
+                                     'Lineup %s missing!' %
+                                     match.home_team.name)
+            elif not visit_lineup:
+                messages.add_message(request, messages.ERROR,
+                                     'Lineup %s missing!' %
+                                     match.visit_team.name)
+            else:
+                #print type(home_lineup),
+                #print home_lineup.players.all()
+                h_home = LineupHandler(home_lineup, int(day),
+                    int(league.offset))
+                h_visit = LineupHandler(visit_lineup, int(day),
+                    int(league.offset))
+                tot_home = h_home.get_pts()
+                tot_visit = h_visit.get_pts()
+                print tot_home, tot_visit
+
+        #        do stuff with lineup
+        #        return redirect('upload_lineup', team.id)
+
+    context = {'league': league, 'matches': matches, 'day': day}
+    return render(request, 'fantalega/match.html', context)

@@ -7,13 +7,13 @@
         <font color="green">{{ league.name }}</font>
     </h1>
 
-<input type="submit" class="btn" value="calc results"
-       name="calc results">
     <table class="table table-striped" width="100%">
     {% if d_calendar %}
       {% for key, value in d_calendar.items %}
               <tr>
-                  <th colspan="2">giornata {{ key }}</th>
+                  <th colspan="2">
+                  <a href="{% url 'match_details' league.id key %}">
+                  giornata {{ key }}</a></th>
               </tr>
 
               <tr><td>{{ value.0.name }}</td>

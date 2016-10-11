@@ -1,0 +1,29 @@
+{% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
+{% load app_filters %}
+
+{% block content %}
+    <h1><font color="green">{{ league.name }}</font>
+    match {{ day }}</h1>
+
+    <table class="table table-striped" width="100%">
+    {% if matches %}
+      {% for match in matches %}
+        <tr>
+        <td><a href="{% url 'team_details' match.home_team.id %}">
+        {{ match.home_team }}</a></td>
+        <td><a href="{% url 'team_details' match.visit_team.id %}">
+        {{ match.visit_team }}</a></td>
+        <td>{{ match.home_team|get_pts:day }}</td>
+        <td>{{ match.visit_team|get_pts:day }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+<form>
+<input type="submit" class="btn" value="calculate"
+       name="calculate">
+</form>
+    {% else %}
+      <p>No match found.</p>
+    {% endif %}
+{% endblock %}
