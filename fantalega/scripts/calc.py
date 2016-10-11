@@ -5,6 +5,35 @@ class BadInputError(Exception):
     pass
 
 
+def defense_modificator(iterable, day):
+    gk = iterable[0]
+    vgk = Evaluation.objects.filter(
+            player=gk, day=day).first().net_value
+    vdef = [Evaluation.objects.filter(
+            player=d, day=day).first().net_value for d in iterable[1:]]
+    if vgk == 0.0:
+        vgk = 6.0
+    for v in vdef:
+        if v == 0.0:
+            vdef[vdef.index(v)] = 6.0
+    values = sorted(vdef, reverse=True)[:3] + [vgk]
+    avgdef = sum(values)/4.0
+    if avgdef == 6:
+        return 1
+    elif 6< avgdef <= 6.25:
+        return 2
+    elif 6.25 < avgdef <= 6.5:
+        return 3
+    elif 6.5 < avgdef <= 6.75:
+        return 4
+    elif 6.75 < avgdef <= 7:
+        return 5
+    elif avgdef > 7:
+        return 6
+    else:
+        return 0
+
+
 def convert_pts_to_goals(pts):
     """
     convert_pts_to_goals(pts) -> int
@@ -187,7 +216,13 @@ class LineupHandler(object):
         new_list = [p for p in self.holders if Evaluation.objects.filter(
             player=p, day=self.day).first().fanta_value > 0.0] +\
             self.added_player
-        return sum([self.get_evaluation(p) for p in new_list])
+        total = sum([self.get_evaluation(p) for p in new_list])
+        defenders = [p for p in new_list if p.role == 'defender']
+        goalkeeper = [p for p in new_list if p.role == 'goalkeeper']
+        if len(defenders) >= 4 and goalkeeper:
+            mod = defense_modificator(goalkeeper + defenders, self.day)
+            total += mod
+        return total
 
     def is_module_accepted(self, player):
         d, m, f = 0, 0, 0

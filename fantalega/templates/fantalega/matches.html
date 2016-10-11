@@ -1,5 +1,6 @@
 {% extends 'fantalega/base.html' %}
 {% load bootstrap3 %}
+{% load app_filters %}
 
 {% block content %}
     <h1>List of all matches for
@@ -7,7 +8,7 @@
     </h1>
 
 <input type="submit" class="btn" value="calc results"
-       name="calc results"></input>
+       name="calc results">
     <table class="table table-striped" width="100%">
     {% if d_calendar %}
       {% for key, value in d_calendar.items %}
@@ -16,15 +17,15 @@
               </tr>
 
               <tr><td>{{ value.0.name }}</td>
-                  <td>{{ value.1.name }}</td><td>-</td><td>-</td></tr>
+                  <td>{{ value.1.name }}</td><td>{{ value.0|get_pts:key }}</td><td>{{ value.1|get_pts:key }}</td></tr>
               <tr><td align="left">{{ value.2.name }}</td>
-                  <td align="left">{{ value.3.name }}</td><td>-</td><td>-</td></tr>
+                  <td align="left">{{ value.3.name }}</td><td>{{ value.2|get_pts:key }}</td><td>{{ value.3|get_pts:key }}</td></tr>
               <tr><td align="left">{{ value.4.name }}</td>
-                  <td align="left">{{ value.5.name }}</td><td>-</td><td>-</td></tr>
+                  <td align="left">{{ value.5.name }}</td><td>{{ value.4|get_pts:key }}</td><td>{{ value.5|get_pts:key }}</td></tr>
               <tr><td align="left">{{ value.6.name }}</td>
-                  <td align="left">{{ value.7.name }}</td><td>-</td><td>-</td></tr>
+                  <td align="left">{{ value.7.name }}</td><td>{{ value.6|get_pts:key }}</td><td>{{ value.7|get_pts:key }}</td></tr>
               <tr><td align="left">{{ value.8.name }}</td>
-                  <td align="left">{{ value.9.name }}</td><td>-</td><td>-</td></tr>
+                  <td align="left">{{ value.9.name }}</td><td>{{ value.8|get_pts:key }}</td><td>{{ value.9|get_pts:key }}</td></tr>
       {% endfor %}
     </table>
 
