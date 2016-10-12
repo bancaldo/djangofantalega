@@ -1,0 +1,32 @@
+{% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
+
+{% block content %}
+		<h1><font color="green">{{ league.name }}</font></h1>
+
+    <table class="table table-striped" width="100%">
+      <tr>
+          <th>team</th>
+          <th>pts</th>
+          <th>won</th>
+          <th>matched</th>
+          <th>lost</th>
+          <th>goals made</th>
+          <th>goals conceded</th>
+          <th>total pts</th>
+      </tr>
+      {% for values in lineups_values %}
+        <tr>
+              <td>{{ values.0.name }}</td>
+              <td>{{ values.1 }}</td>
+              <td>{{ values.2 }}</td>
+              <td>{{ values.3 }}</td>
+              <td>{{ values.4 }}</td>
+              <td>{{ values.5 }}</td>
+              <td>{{ values.6 }}</td>
+              <td>{{ values.7 }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+{% endblock %}

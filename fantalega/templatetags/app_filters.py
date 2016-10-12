@@ -9,7 +9,7 @@ register = template.Library()
 def get_fvote(player, day):
     evaluation = player.player_votes.filter(day=int(day)).first()
     if evaluation:
-        return ('%s' % float(evaluation.fanta_value))
+        return '%s' % float(evaluation.fanta_value)
     else:
         return '0.0'
 
@@ -18,9 +18,10 @@ def get_fvote(player, day):
 def get_vote(player, day):
     evaluation = player.player_votes.filter(day=int(day)).first()
     if evaluation:
-        return ('%s' % float(evaluation.net_value))
+        return '%s' % float(evaluation.net_value)
     else:
         return '0.0'
+
 
 @register.filter(name='get_pts')
 def get_pts(team, day):
@@ -30,3 +31,16 @@ def get_pts(team, day):
     else:
         return "ND"
 
+
+@register.filter(name='get_goals')
+def get_goals(team, day):
+    lineup = team.team_lineups.filter(day=int(day)).first()
+    if lineup:
+        return lineup.goals_made
+    else:
+        return "ND"
+
+
+@register.assignment_tag
+def get_matches(matches, day):
+    return matches.filter(day=day)

@@ -14,15 +14,15 @@
         {{ match.home_team }}</a></td>
         <td><a href="{% url 'team_details' match.visit_team.id %}">
         {{ match.visit_team }}</a></td>
-        <td>{{ match.home_team|get_pts:day }}</td>
-        <td>{{ match.visit_team|get_pts:day }}</td>
+        <td>{{ match.home_team|get_goals:day }}</td>
+        <td>{{ match.visit_team|get_goals:day }}</td>
         </tr>
       {% endfor %}
     </table>
-<form>
-<input type="submit" class="btn" value="calculate"
-       name="calculate">
-</form>
+        <a href="{% url 'matches' league.id %}">...return to calendar</a><br><br>
+        <form>
+            <input type="submit" class="btn" value="calculate" name="calculate">
+        </form>
     {% else %}
       <p>No match found.</p>
     {% endif %}

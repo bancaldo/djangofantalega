@@ -5,30 +5,29 @@ class BadInputError(Exception):
     pass
 
 
-def defense_modificator(iterable, day):
+def defense_modifier(iterable, day):
     gk = iterable[0]
-    vgk = Evaluation.objects.filter(
-            player=gk, day=day).first().net_value
-    vdef = [Evaluation.objects.filter(
-            player=d, day=day).first().net_value for d in iterable[1:]]
+    vgk = Evaluation.objects.filter(player=gk, day=day).first().net_value
+    def_votes = [Evaluation.objects.filter(
+        player=d, day=day).first().net_value for d in iterable[1:]]
     if vgk == 0.0:
         vgk = 6.0
-    for v in vdef:
+    for v in def_votes:
         if v == 0.0:
-            vdef[vdef.index(v)] = 6.0
-    values = sorted(vdef, reverse=True)[:3] + [vgk]
-    avgdef = sum(values)/4.0
-    if avgdef == 6:
+            def_votes[def_votes.index(v)] = 6.0
+    values = sorted(def_votes, reverse=True)[:3] + [vgk]
+    avg_def = sum(values)/4.0
+    if avg_def == 6:
         return 1
-    elif 6< avgdef <= 6.25:
+    elif 6 < avg_def <= 6.25:
         return 2
-    elif 6.25 < avgdef <= 6.5:
+    elif 6.25 < avg_def <= 6.5:
         return 3
-    elif 6.5 < avgdef <= 6.75:
+    elif 6.5 < avg_def <= 6.75:
         return 4
-    elif 6.75 < avgdef <= 7:
+    elif 6.75 < avg_def <= 7:
         return 5
-    elif avgdef > 7:
+    elif avg_def > 7:
         return 6
     else:
         return 0
@@ -85,11 +84,11 @@ def lineups_data(goals_a, goals_b):
 
     Convert to goals team data as: won, lost, matched, goals_made etc, i.e.:
     lineups_data(3, 2) -> {'hw': 1, 'vw': 0, 'hl': 0, ...}
-    hw stays for home_won
-    hm stays for home_matched
-    hl stays for home_lost
-    hgm stays for home goals made
-    hgc stays for home goals conceded
+    hw: home_won               vw: visit_won
+    hm: home_matched           vm: visit_matched
+    hl: home_lost              ...and so on
+    hgm: home goals made
+    hgc: home goals conceded
 
     :param goals_a: int goals of team A
     :param goals_b: int goals of team B
@@ -220,7 +219,7 @@ class LineupHandler(object):
         defenders = [p for p in new_list if p.role == 'defender']
         goalkeeper = [p for p in new_list if p.role == 'goalkeeper']
         if len(defenders) >= 4 and goalkeeper:
-            mod = defense_modificator(goalkeeper + defenders, self.day)
+            mod = defense_modifier(goalkeeper + defenders, self.day)
             total += mod
         return total
 

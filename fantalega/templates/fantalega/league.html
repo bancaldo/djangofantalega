@@ -4,7 +4,7 @@
 {% block content %}
 		<h1><font color="green">{{ league.name }}</font></h1>
 
-    <table class="table table-striped" width="40%">
+    <table class="table table-striped" width="100%">
       <tr>
           <th>budget</th>
           <th>max trade remaining</th>
@@ -50,7 +50,8 @@
                       Evaluation day: {{ day }}</a></li>
                   {% endfor %}
                 </ul>
-                <b><a href="{% url 'matches' league.id %}">view calendar</a></b>
+                <b><a href="{% url 'matches' league.id %}">view calendar</a></b><br>
+                <b><a href="{% url 'chart' league.id %}">view chart</a></b><br>
             </div>
         </div>
 {% endblock %}

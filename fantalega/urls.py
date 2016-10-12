@@ -37,4 +37,6 @@ urlpatterns = [
         views.lineup_edit, name='lineup_edit'),
     url(r'^leagues/(?P<league_id>[0-9]+)/matches/(?P<day>[0-9]+)/$',
         views.match_details, name='match_details'),
+    url(r'^leagues/(?P<league_id>[0-9]+)/chart$',
+        views.chart, name='chart'),
 ]

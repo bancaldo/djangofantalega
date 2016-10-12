@@ -7,7 +7,7 @@ from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
 from django.contrib import messages
 from fantalega.scripts.calendar import create_season
 from datetime import datetime
-from fantalega.scripts.calc import LineupHandler
+from fantalega.scripts.calc import LineupHandler, get_final, lineups_data
 
 
 # Create your views here.
@@ -324,14 +324,18 @@ def lineup_edit(request, team_id, day):
 
 def matches(request, league_id):
     league = League.objects.get(id=int(league_id))
+    matches = league.matches
+    days = [d['day'] for d in Match.objects.values('day').distinct()]
     d_calendar = Match.calendar_to_dict(league)
-    context = {'league': league, 'd_calendar': d_calendar}
+    context = {'league': league, 'd_calendar': d_calendar,
+               'days': days, 'matches': matches}
     return render(request, 'fantalega/matches.html', context)
 
 
 def match_details(request, league_id, day):
-    league = League.objects.get(pk=int(day))
+    league = League.objects.get(pk=int(league_id))
     matches = league.matches.filter(day=int(day))
+    missing_lineups = []
     if request.GET.get('calculate'):
         for match in matches:
             home_lineup = match.home_team.team_lineups.filter(
@@ -339,26 +343,62 @@ def match_details(request, league_id, day):
             visit_lineup = match.visit_team.team_lineups.filter(
                 day=int(day)).first()
             if not home_lineup:
+                missing_lineups.append(match.home_team.name)
                 messages.add_message(request, messages.ERROR,
                                      'Lineup %s missing!' %
                                      match.home_team.name)
             elif not visit_lineup:
+                missing_lineups.append(match.visit_team.name)
                 messages.add_message(request, messages.ERROR,
                                      'Lineup %s missing!' %
                                      match.visit_team.name)
             else:
-                #print type(home_lineup),
-                #print home_lineup.players.all()
                 h_home = LineupHandler(home_lineup, int(day),
                     int(league.offset))
                 h_visit = LineupHandler(visit_lineup, int(day),
                     int(league.offset))
-                tot_home = h_home.get_pts()
-                tot_visit = h_visit.get_pts()
-                print tot_home, tot_visit
-
-        #        do stuff with lineup
-        #        return redirect('upload_lineup', team.id)
+                home_pts = h_home.get_pts() + 2
+                visit_pts = h_visit.get_pts()
+                home_goals, visit_goals = get_final(home_pts, visit_pts)
+                data = lineups_data(home_goals, visit_goals)
+                home_lineup.pts = home_pts
+                home_lineup.save()
+                visit_lineup.pts = visit_pts
+                visit_lineup.save()
+                for lineup, prefix in [(home_lineup, 'h'), (visit_lineup, 'v')]:
+                    lineup.won = data.get("%sw" % prefix)
+                    lineup.matched = data.get("%sm" % prefix)
+                    lineup.lost = data.get("%sl" % prefix)
+                    lineup.goals_made = data.get("%sgm" % prefix)
+                    lineup.goals_conceded = data.get("%sgc" % prefix)
+                    lineup.save()
+            if missing_lineups:
+                messages.add_message(request, messages.ERROR,
+                                     'Some Lineups are missing: %s' %
+                                     ', '.join(missing_lineups))
+                return redirect('league', league.id)
+        messages.add_message(request, messages.SUCCESS,
+                     'All Lineup values are upgraded!')
+        return redirect('matches', league.id)
 
     context = {'league': league, 'matches': matches, 'day': day}
     return render(request, 'fantalega/match.html', context)
+
+
+def chart(request, league_id):
+    league = League.objects.get(id=int(league_id))
+    teams = league.team_set.all()
+    lineups_values = []
+    for team in teams:
+        lineups = [lineup for lineup in team.team_lineups.all() if lineup.pts]
+        won = sum([lineup.won for lineup in lineups])
+        matched = sum([lineup.matched for lineup in lineups])
+        lost = sum([lineup.lost for lineup in lineups])
+        gm = sum([lineup.goals_made for lineup in lineups])
+        gc = sum([lineup.goals_conceded for lineup in lineups])
+        tot_pts = sum([lineup.pts for lineup in lineups])
+        tot = won * 3 + matched
+        lineups_values.append((team, tot, won, matched, lost, gm, gc, tot_pts))
+    lineups_values.sort(key=lambda x: (x[1], x[6]), reverse=True)
+    context = {'league': league, 'lineups_values': lineups_values}
+    return render(request, 'fantalega/chart.html', context)

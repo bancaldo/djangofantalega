@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 # noinspection PyUnresolvedReferences
 from django.db import models
 
+
 class League(models.Model):
     name = models.CharField(max_length=32)
     budget = models.IntegerField()
@@ -20,6 +21,9 @@ class League(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_matches_by_day(self, day):
+        return self.matches.filter(day=day)
 
 
 class Team(models.Model):
@@ -150,6 +154,20 @@ class Match (models.Model):
             values.append(visit)
         return d
 
+    def is_played(self):
+        home_lineup = self.home_team.team_lineups.filter(day=self.day).first()
+        visit_lineup = self.visit_team.team_lineups.filter(day=self.day).first()
+        if not home_lineup or not visit_lineup:
+            return False
+        home_players = home_lineup.players.count()
+        visit_players = visit_lineup.players.count()
+        evaluations = Evaluation.objects.filter(
+            day=self.day + self.league.offset).count()
+        if home_players and visit_players and evaluations:
+            return True
+        else:
+            return False
+
 
 class Evaluation(models.Model):
     league = models.ForeignKey(League, related_name='league_votes')
@@ -174,7 +192,6 @@ class Evaluation(models.Model):
             return code, evaluation.fanta_value, evaluation.net_value
         else:
             return code, None, None
-
 
     @staticmethod
     def upload(path, day, league):

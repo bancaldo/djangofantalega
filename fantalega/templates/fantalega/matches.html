@@ -8,28 +8,21 @@
     </h1>
 
     <table class="table table-striped" width="100%">
-    {% if d_calendar %}
-      {% for key, value in d_calendar.items %}
-              <tr>
-                  <th colspan="2">
-                  <a href="{% url 'match_details' league.id key %}">
-                  giornata {{ key }}</a></th>
-              </tr>
-
-              <tr><td>{{ value.0.name }}</td>
-                  <td>{{ value.1.name }}</td><td>{{ value.0|get_pts:key }}</td><td>{{ value.1|get_pts:key }}</td></tr>
-              <tr><td align="left">{{ value.2.name }}</td>
-                  <td align="left">{{ value.3.name }}</td><td>{{ value.2|get_pts:key }}</td><td>{{ value.3|get_pts:key }}</td></tr>
-              <tr><td align="left">{{ value.4.name }}</td>
-                  <td align="left">{{ value.5.name }}</td><td>{{ value.4|get_pts:key }}</td><td>{{ value.5|get_pts:key }}</td></tr>
-              <tr><td align="left">{{ value.6.name }}</td>
-                  <td align="left">{{ value.7.name }}</td><td>{{ value.6|get_pts:key }}</td><td>{{ value.7|get_pts:key }}</td></tr>
-              <tr><td align="left">{{ value.8.name }}</td>
-                  <td align="left">{{ value.9.name }}</td><td>{{ value.8|get_pts:key }}</td><td>{{ value.9|get_pts:key }}</td></tr>
+      {% for day in days %}
+          <tr>
+              <th colspan="2">
+              <a href="{% url 'match_details' league.id day %}">
+              giornata {{ day }}</a></th>
+          </tr>
+          {% get_matches matches day as f_matches %}
+          {% for match in f_matches %}
+          <tr>
+              <td align="left">{{ match.home_team.name }}</td>
+              <td align="left">{{ match.visit_team.name }}</td>
+              <td>{{ match.home_team|get_goals:day }}</td>
+              <td>{{ match.visit_team|get_goals:day }}</td>
+          </tr>
+          {% endfor %}
       {% endfor %}
     </table>
-
-    {% else %}
-      <p>No calendar found.</p>
-    {% endif %}
 {% endblock %}
