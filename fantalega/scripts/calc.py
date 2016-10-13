@@ -47,7 +47,7 @@ def convert_pts_to_goals(pts):
             return 0
         return (float(pts) - 60) // 6
     else:
-        raise BadInputError("Need a Float as input")
+        raise BadInputError("Need a Float as input, %s in input" % pts)
 
 
 def get_final(pts_a, pts_b):
@@ -75,7 +75,8 @@ def get_final(pts_a, pts_b):
             goal_b += 1
         return int(goal_a), int(goal_b)
     else:
-        raise BadInputError("Need a Float as input")
+        raise BadInputError("Need a Float as input, %s and %s in input" %\
+                            (pts_a, pts_b))
 
 
 def lineups_data(goals_a, goals_b):

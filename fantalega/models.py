@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 
 # noinspection PyUnresolvedReferences
 from django.db import models
+from fantalega.scripts.xlstools import LineupExtractor as LEx
+from datetime import datetime
 
 
 class League(models.Model):
@@ -251,6 +253,33 @@ class Lineup (models.Model):
 
     def __str__(self):
         return "[%s] %s" % (self.day, self.team.name)
+
+    @staticmethod
+    def upload_lineups_from_xls(path, league, day):
+        for team in league.team_set.all():
+            if team.team_lineups.filter(day=day).first():
+                print "[INFO] Lineup of %s for day %s already exists!" %\
+                    (team.name, day)
+            else:
+                print team
+                ex = LEx(path, team.name, day)
+                players = ex.extract()
+                lineup = Lineup.objects.create(team=team, day=day,
+                                               timestamp=datetime.now())
+                for pos, player in enumerate(players, 1):
+                    if player:
+                        player_obj = Player.objects.filter(
+                            name=player.upper()).first()
+                    else:
+                        print "[WARNING] Player %s doesn't exist" % player
+                        player_obj = [p for p in team.player_set.all()
+                                      if p not in lineup.players.all()][0]
+                        print "[WARNING] Fill lineup with %s" % player_obj.name
+                    print "#"*20, player_obj
+                    LineupsPlayers.objects.create(position=pos, lineup=lineup,
+                                                  player=player_obj)
+                print "[INFO] Lineup of %s for day %s uploaded!" %\
+                    (team.name, day)
 
 
 # M2M secondary Association object
