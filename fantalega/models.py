@@ -21,7 +21,7 @@ class League(models.Model):
         return self.max_goalkeepers + self.max_defenders + \
             self.max_midfielders + self.max_forwards
 
-    def __str__(self):
+    def __unicode__(self):
         return self.name
 
     def get_matches_by_day(self, day):
@@ -40,7 +40,7 @@ class Team(models.Model):
     def set_visit(self):
         self.home = False
 
-    def __str__(self):
+    def __unicode__(self):
         return self.name
 
     @staticmethod
@@ -73,6 +73,9 @@ class LeaguesTeams(models.Model):
     league = models.ForeignKey(League, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
 
+    class Meta:
+        verbose_name_plural = 'League-Team Associations'
+
 
 class Player(models.Model):
     code = models.IntegerField()
@@ -83,7 +86,7 @@ class Player(models.Model):
     role = models.CharField(max_length=16)
     team = models.ForeignKey(Team, null=True)
 
-    def __str__(self):
+    def __unicode__(self):
         return self.name
 
     @staticmethod
@@ -128,7 +131,7 @@ class Trade(models.Model):
     team = models.ForeignKey(Team)
     direction = models.CharField(max_length=3)  # IN or OUT value
 
-    def __str__(self):
+    def __unicode__(self):
         return "[%s] %s: %s" % (self.direction, self.team.name,
                                 self.player.name)
 
@@ -139,7 +142,10 @@ class Match (models.Model):
     home_team = models.ForeignKey(Team, related_name='home_team')
     visit_team = models.ForeignKey(Team, related_name='visit_team')
 
-    def __str__(self):
+    class Meta:
+        verbose_name_plural = 'Matches'
+
+    def __unicode__(self):
         return "[%s] %s - %s" % (self.day, self.home_team.name,
                                  self.visit_team.name)
 
@@ -179,7 +185,7 @@ class Evaluation(models.Model):
     fanta_value = models.FloatField()
     cost = models.IntegerField()
 
-    def __str__(self):
+    def __unicode__(self):
         return "[%s] %s" % (self.day, self.player.name)
 
     @staticmethod
@@ -251,7 +257,7 @@ class Lineup (models.Model):
         if lineup_players:
             return [rec.player for rec in lineup_players]
 
-    def __str__(self):
+    def __unicode__(self):
         return "[%s] %s" % (self.day, self.team.name)
 
     @staticmethod
@@ -275,7 +281,7 @@ class Lineup (models.Model):
                         player_obj = [p for p in team.player_set.all()
                                       if p not in lineup.players.all()][0]
                         print "[WARNING] Fill lineup with %s" % player_obj.name
-                    print "#"*20, player_obj
+                    print "[INFO] saving Player %s in db..." % player_obj
                     LineupsPlayers.objects.create(position=pos, lineup=lineup,
                                                   player=player_obj)
                 print "[INFO] Lineup of %s for day %s uploaded!" %\
@@ -287,6 +293,9 @@ class LineupsPlayers(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     lineup = models.ForeignKey(Lineup, on_delete=models.CASCADE)
     position = models.IntegerField()
+
+    class Meta:
+        verbose_name_plural = 'Lineup-Player Associations'
 
     @staticmethod
     def get_sorted_lineup(lineup):
