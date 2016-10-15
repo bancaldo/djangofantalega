@@ -20,6 +20,14 @@
           <div class="navbar-header">
             <a class="navbar-brand" href="\admin">Admin</a></div>
     </div>
+    <div>
+      {{ user }}
+      {% if user.is_anonymous %}
+      <a href="{% url 'django.contrib.auth.views.login' %}">login</a>
+      {% else %}
+      <a href="{% url 'logout' %}">logout</a>
+      {% endif %}
+    </div>
   </div>
 {% endblock %}
 

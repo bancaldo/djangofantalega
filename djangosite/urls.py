@@ -22,8 +22,12 @@ from django.contrib.auth import views as auth_views  # auth system
 
 urlpatterns = [
     url(r'^fantalega/', include('fantalega.urls')),
-    url(r'^accounts/login/$', auth_views.login,
-        {'template_name': 'registration/login.html'}, name='login'),  # auth system
-    url(r'^logout/$', auth_views.logout, name='logout'),  # auth system
+    url(r'^login/$', auth_views.login,
+        {'template_name': 'registration/login.html'},
+        name='django.contrib.auth.views.login'),  # auth system
+    #url(r'^login/$', auth_views.login, name='login'),
+    url(r'^logout/$', auth_views.logout,
+        {'template_name': 'registration/logged_out.html'},
+        name='logout'),  # auth system
     url(r'^admin/', admin.site.urls),
 ]
