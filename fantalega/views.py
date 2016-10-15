@@ -17,6 +17,7 @@ def index(request):
     return render(request, 'fantalega/index.html')
 
 
+@login_required
 def leagues(request):
     context = {'leagues': League.objects.order_by('-name')}
     return render(request, 'fantalega/leagues.html', context)

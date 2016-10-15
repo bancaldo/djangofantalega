@@ -38,7 +38,7 @@
                         name="calculate">
                 </form>
             </div>
-            <div id="right" style="float:right; width:30%;">
+            <div id="right" style="float:right; width:40%;">
                 <b><font color="orange">substitutes:</font></b><br>
 
                 <table class="table table-striped">
