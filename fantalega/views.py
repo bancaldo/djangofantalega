@@ -8,9 +8,11 @@ from django.contrib import messages
 from fantalega.scripts.calendar import create_season
 from datetime import datetime
 from fantalega.scripts.calc import LineupHandler, get_final, lineups_data
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
+@login_required(login_url='/accounts/login/')
 def index(request):
     return render(request, 'fantalega/index.html')
 

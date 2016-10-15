@@ -26,7 +26,7 @@ SECRET_KEY = 'jl5se)6n5h#oclhgg*5sfsmj6kj9s)1#lop67+fke^d5$ptdi%'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+LOGIN_REDIRECT_URL = '/fantalega'
 
 # Application definition
 
