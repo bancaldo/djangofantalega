@@ -19,18 +19,20 @@
             <a class="navbar-brand" href="{% url 'players' %}">Players</a></div>
           <div class="navbar-header">
             <a class="navbar-brand" href="\admin">Admin</a></div>
-    </div>
-    <div>
-      {{ user }}
-      {% if user.is_anonymous %}
-      <a href="{% url 'django.contrib.auth.views.login' %}">login</a>
-      {% else %}
-      <a href="{% url 'logout' %}">logout</a>
-      {% endif %}
+          <div class="navbar-header">
+            {% if user.is_anonymous %}
+              <a class="navbar-brand"
+                 href="{% url 'django.contrib.auth.views.login' %}">
+                  <font color="green">login</font></a>
+            {% else %}
+              <a class="navbar-brand"
+                 href="{% url 'logout' %}?next={{ request.path }}">
+              <font color="orange">logout</font></a>
+            {% endif %}
+          </div>
     </div>
   </div>
 {% endblock %}
-
 
 <html>
     <head>

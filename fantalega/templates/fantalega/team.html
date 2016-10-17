@@ -49,6 +49,7 @@
                   </tr>
                       {% endfor %}
                 </table>
+                {% if user.is_authenticated and user.team == team %}
                 <form action="#" method="get">
                  <input type="submit" class="btn" value="new trade"
                         name="new trade">
@@ -64,6 +65,7 @@
                  <input type="submit" class="btn" value="new lineup"
                         name="new lineup">
                 </form>
+                {% endif %}
             </div>
         </div>
 {% endblock %}

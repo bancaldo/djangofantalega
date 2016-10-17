@@ -35,12 +35,14 @@
                       {{ team.name }}</a></li>
                   {% endfor %}
                 </ul>
+                {% if user.is_staff %}
                 <form action="#" method="get">
                   <input type="submit" class="btn" value="Start Auction"
                         name="auction">
                   <input type="submit" class="btn" value="Create Calendar"
                         name="calendar">
                 </form>
+                {% endif %}
             </div>
             <div id="right" style="float:right; width:50%;">
                 <b><font color="orange">Evaluation uploaded</font></b>
@@ -50,6 +52,10 @@
                       Evaluation day: {{ day }}</a></li>
                   {% endfor %}
                 </ul>
+                <form action="#" method="get">
+                  <input type="submit" class="btn" value="Upload votes"
+                        name="upload votes">
+                </form>
                 <b><a href="{% url 'matches' league.id %}">view calendar</a></b><br>
                 <b><a href="{% url 'chart' league.id %}">view chart</a></b><br>
             </div>

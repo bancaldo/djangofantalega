@@ -9,9 +9,13 @@ from fantalega.scripts.calendar import create_season
 from datetime import datetime
 from fantalega.scripts.calc import LineupHandler, get_final, lineups_data
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
 
 
-# Create your views here.
+#def username_check(user):
+#    return user.username == 'bancaldo'
+
+
 @login_required
 def index(request):
     return render(request, 'fantalega/index.html')
@@ -23,6 +27,8 @@ def leagues(request):
     return render(request, 'fantalega/leagues.html', context)
 
 
+@login_required
+#@user_passes_test(username_check)
 def league_details(request, league_id):
     league = League.objects.get(id=int(league_id))
     teams = league.team_set.all()
@@ -32,20 +38,25 @@ def league_details(request, league_id):
         return redirect('auction', league.id)
     if request.GET.get('calendar'):
         return redirect('calendar', league.id)
-    context = {'league': league, 'teams': teams, 'days': days}
+    if request.GET.get('upload votes'):
+        return redirect('upload_votes', league.id)
+    context = {'league': league, 'teams': teams,
+               'days': days, 'user': request.user}
     return render(request, 'fantalega/league.html', context)
 
 
+@login_required
 def teams(request):
     teams = Team.objects.order_by('name')
     context = {'teams': teams}
     return render(request, 'fantalega/teams.html', context)
 
 
+@login_required
 def team_details(request, team_id):
     team = Team.objects.get(id=int(team_id))
     lineups = team.team_lineups.order_by('day')
-    context = {'team': team, 'lineups': lineups}
+    context = {'team': team, 'lineups': lineups, 'user': request.user}
     if request.GET.get('new lineup'):
         return redirect('upload_lineup', team.id)
     if request.GET.get('new trade'):
@@ -53,12 +64,14 @@ def team_details(request, team_id):
     return render(request, 'fantalega/team.html', context)
 
 
+@login_required
 def players(request):
     players = Player.objects.order_by('code')
     context = {'players': players}
     return render(request, 'fantalega/players.html', context)
 
 
+@login_required
 def player_details(request, player_id):
     player = Player.objects.get(id=int(player_id))
     votes = player.player_votes.all()
@@ -66,6 +79,7 @@ def player_details(request, player_id):
     return render(request, 'fantalega/player.html', context)
 
 
+@login_required
 def auction(request, league_id):
     league = League.objects.get(pk=int(league_id))
     players = [(p.code, p.name) for p in Player.objects.all() if not p.team]
@@ -103,6 +117,7 @@ def auction(request, league_id):
                   {'form': form, 'players': players, 'teams': teams})
 
 
+@login_required
 def trade(request, team_id):
     team = Team.objects.get(pk=int(team_id))
     players = [(p.code, "%s - %s" % (p.name, p.role))
@@ -159,11 +174,13 @@ def trade(request, team_id):
                    'team': team})
 
 
+@login_required
 def trades(request):
     context = {'trades': Trade.objects.all()}
     return render(request, 'fantalega/trades.html', context)
 
 
+@login_required
 def calendar(request, league_id):
     league = League.objects.get(id=int(league_id))
     matches = league.matches.order_by('day')
@@ -184,6 +201,7 @@ def calendar(request, league_id):
     return render(request, 'fantalega/calendar.html', context)
 
 
+@login_required
 def vote(request, league_id, day):
     league = League.objects.get(pk=league_id)
     votes = Evaluation.objects.filter(league=league, day=day).all()
@@ -191,6 +209,7 @@ def vote(request, league_id, day):
     return render(request, 'fantalega/vote.html', context)
 
 
+@login_required
 def upload_votes(request, league_id):
     league = League.objects.get(pk=int(league_id))
     if request.method == "POST":
@@ -207,6 +226,7 @@ def upload_votes(request, league_id):
                   {'form': form, 'league': league})
 
 
+@login_required
 def lineup_details(request, team_id, day):
     team = Team.objects.get(pk=team_id)
     offset = team.leagues.all()[0].offset
@@ -233,6 +253,7 @@ def lineup_details(request, team_id, day):
     return render(request, 'fantalega/lineup.html', context)
 
 
+@login_required
 def upload_lineup(request, team_id, day=None):
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
@@ -275,6 +296,7 @@ def upload_lineup(request, team_id, day=None):
                   {'form': form, 'players': players, 'team': team})
 
 
+@login_required
 def lineup_edit(request, team_id, day):
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
@@ -325,6 +347,7 @@ def lineup_edit(request, team_id, day):
                   {'form': form, 'players': players, 'team': team})
 
 
+@login_required
 def matches(request, league_id):
     league = League.objects.get(id=int(league_id))
     matches = league.matches
@@ -335,6 +358,7 @@ def matches(request, league_id):
     return render(request, 'fantalega/matches.html', context)
 
 
+@login_required
 def match_details(request, league_id, day):
     league = League.objects.get(pk=int(league_id))
     matches = league.matches.filter(day=int(day))
@@ -379,7 +403,7 @@ def match_details(request, league_id, day):
                 messages.add_message(request, messages.ERROR,
                                      'Some Lineups are missing: %s' %
                                      ', '.join(missing_lineups))
-                return redirect('league', league.id)
+                return redirect('league_details', league.id)
         messages.add_message(request, messages.SUCCESS,
                      'All Lineup values are upgraded!')
         return redirect('matches', league.id)
@@ -388,6 +412,7 @@ def match_details(request, league_id, day):
     return render(request, 'fantalega/match.html', context)
 
 
+@login_required
 def chart(request, league_id):
     league = League.objects.get(id=int(league_id))
     teams = league.team_set.all()

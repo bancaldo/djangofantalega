@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import models
 from fantalega.scripts.xlstools import LineupExtractor as LEx
 from datetime import datetime
+from django.contrib.auth.models import User
 
 
 class League(models.Model):
@@ -32,6 +33,7 @@ class Team(models.Model):
     name = models.CharField(max_length=32)
     budget = models.IntegerField()
     max_trades = models.IntegerField()
+    user = models.OneToOneField(User, null=True, related_name='team')
     leagues = models.ManyToManyField(League, through='LeaguesTeams')
 
     def set_home(self):
