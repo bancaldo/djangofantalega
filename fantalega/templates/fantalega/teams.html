@@ -3,7 +3,8 @@
 
 {% block content %}
     <font face="Arial">
-        <h1><font color="green">List of TEAMS</font></h1>
+        <b>List of teams for <font color="green">{{ league.name }}</font></b>
+        <br><br>
     {% if teams %}
     <ul>
       {% for team in teams %}

@@ -3,6 +3,9 @@
 
 {% block content %}
     <h1>Upload votes for <font color="green">{{ league.name }}</font></h1>
+        <a href="{% url 'league_details' league.id %}">
+            <b>< back to {{ league.name }}</b></a>
+
     <form enctype="multipart/form-data" method="POST" class="form">
 		{% csrf_token %}
         {% bootstrap_form form %}

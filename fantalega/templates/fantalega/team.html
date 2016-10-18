@@ -1,8 +1,13 @@
 {% extends 'fantalega/base.html' %}
 {% load bootstrap3 %}
+{% load app_filters %}
 
 {% block content %}
+
 		<h1><font color="green">{{ team.name }}</font></h1>
+            <a href="{% url 'league_details' league.id %}">
+                <b>< back to {{ league.name}} teams</b></a>
+
     <table class="table table-striped" width="40%">
       <tr>
           <th>budget</th>
@@ -57,8 +62,8 @@
                 <b><font color="orange">Team lineups:</font></b><br>
                   {% for lineup in lineups %}
                     <ul>
-                      <li><a href="{% url 'lineup_details' team.id lineup.day %}">lineup day:
-                          {{ lineup.day }}</a></li>
+                      <li><a href="{% url 'lineup_details' league.id team.id lineup.day %}">lineup day:
+                          {{ lineup.day }}</a>: {{ lineup.pts|pts_filter }}</li>
                     </ul>
                   {% endfor %}
                 <form action="#" method="get">

@@ -37,6 +37,12 @@
                  <input type="submit" class="btn" value="calculate"
                         name="calculate">
                 </form>
+
+                <b><font color="orange">pts:</font></b>
+                    {{ total|pts_filter }}
+                <br>
+                <br>
+                <a href="{% url 'team_details' league.id team.id %}"><b>< back</b></a>
             </div>
             <div id="right" style="float:right; width:30%;">
                 <b><font color="orange">substitutes:</font></b><br>

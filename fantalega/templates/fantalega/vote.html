@@ -4,6 +4,9 @@
     <font face="Arial">
         <h1><font color="red">{{ league.name }}</font></h1>
         <font color="green">List of evaluations for day {{ day }}</font><br>
+        <a href="{% url 'league_details' league.id %}">
+            <b>< back to {{ league.name }}</b></a>
+
       <br>
         <table class="table table-striped" width="100%">
           <tr>

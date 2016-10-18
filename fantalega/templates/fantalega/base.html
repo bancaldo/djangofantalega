@@ -4,8 +4,9 @@
 {# Load CSS and JavaScript #}
 {% bootstrap_css %}
 {% bootstrap_javascript %}
-{# Display django.contrib.messages as Bootstrap alerts #}
-{% bootstrap_messages %}
+<!--{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}-->
+{% load app_filters %}
 
 {% block head %}
 {% endblock %}
@@ -13,51 +14,61 @@
 {% block navbar %}
   <div class="navbar navbar-inverse" role="navigation">
     <div class="container">
-          <div class="navbar-header">
-            <a class="navbar-brand" href="{% url 'leagues' %}">Leagues</a></div>
-          <div class="navbar-header">
-            <a class="navbar-brand" href="{% url 'players' %}">Players</a></div>
-          <div class="navbar-header">
-            <a class="navbar-brand" href="\admin">Admin</a></div>
-          <div class="navbar-header">
-            {% if user.is_anonymous %}
-              <a class="navbar-brand"
-                 href="{% url 'django.contrib.auth.views.login' %}">
-                  <font color="green">login</font></a>
-            {% else %}
-              <a class="navbar-brand"
-                 href="{% url 'logout' %}?next={{ request.path }}">
-              <font color="orange">logout</font></a>
-            {% endif %}
-          </div>
+    {% if user.is_anonymous %}
+      <div class="navbar-header">
+        <a class="navbar-brand">
+            Bancaldo
+            <font color="green">Fan</font><font color="white">tal</font><font color="red">ega</font>
+            please login</a></div>
+    {% else %}
+      {% if user.is_staff %}
+        <div class="navbar-header">
+          <a class="navbar-brand" href="\admin">
+              <font color="red">Admin</font></a></div>
+      {% endif %}
+      <div class="navbar-header">
+        <a class="navbar-brand" href="{% url 'leagues' %}">Leagues</a></div>
+      <div class="navbar-header">
+        <a class="navbar-brand" href="{% url 'players' %}">
+          Players</a></div>
+    {% endif %}
+
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav navbar-right">
+        {% if not user.is_anonymous %}
+          <li><a class="navbar-brand"
+             href="{% url 'logout' %}?next={{ request.path }}">
+          <font color="orange">logout</font></a></li>
+        {% endif %}
+        </ul>
+      </div>
     </div>
   </div>
 {% endblock %}
 
 <html>
     <head>
-        <title>{% block title %}Django Fantalega{% endblock %}</title>
+      <title>{% block title %}Django Fantalega{% endblock %}</title>
     </head>
     <body>
+      {% if messages %}
+        <ul class="list-unstyled messages">
+        {% for message in messages %}
+          {% get_bootstrap_alert_msg_css_name message.tags as alert_tag %}
+          <li class="alert alert-{{ alert_tag }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
 
-<!--    {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>
-            {{ message }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}-->
-    <div class="content container">
-            <div class="row">
-                <div class="col-md-8">
-
-                    {% block content %}
-                    {% endblock %}
-                </div>
-                <br>
-            </div>
+      <div class="content container">
+        <div class="row">
+          <div class="col-md-8">
+            {% block content %}
+            {% endblock %}
+          </div>
         </div>
+        <br>
+      </div>
     </body>
 </html>
 

@@ -9,11 +9,11 @@ from fantalega.scripts.calendar import create_season
 from datetime import datetime
 from fantalega.scripts.calc import LineupHandler, get_final, lineups_data
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import user_passes_test
+# from django.contrib.auth.decorators import user_passes_test
 
 
-#def username_check(user):
-#    return user.username == 'bancaldo'
+# def username_check(user):
+#     return user.username == 'bancaldo'
 
 
 @login_required
@@ -28,10 +28,10 @@ def leagues(request):
 
 
 @login_required
-#@user_passes_test(username_check)
+# @user_passes_test(username_check)
 def league_details(request, league_id):
     league = League.objects.get(id=int(league_id))
-    teams = league.team_set.all()
+    league_teams = league.team_set.all()
     days = [d['day'] for d in
             Evaluation.objects.order_by('day').values('day').distinct()]
     if request.GET.get('auction'):
@@ -40,25 +40,29 @@ def league_details(request, league_id):
         return redirect('calendar', league.id)
     if request.GET.get('upload votes'):
         return redirect('upload_votes', league.id)
-    context = {'league': league, 'teams': teams,
+    context = {'league': league, 'teams': league_teams,
                'days': days, 'user': request.user}
     return render(request, 'fantalega/league.html', context)
 
 
 @login_required
-def teams(request):
-    teams = Team.objects.order_by('name')
-    context = {'teams': teams}
+def teams(request, league_id):
+    league = League.objects.get(pk=int(league_id))
+#    sorted_teams = Team.objects.order_by('name')
+    sorted_teams = league.team_set.order_by('name')
+    context = {'teams': sorted_teams, 'league': league}
     return render(request, 'fantalega/teams.html', context)
 
 
 @login_required
-def team_details(request, team_id):
+def team_details(request, league_id, team_id):
+    league = League.objects.get(pk=int(league_id))
     team = Team.objects.get(id=int(team_id))
     lineups = team.team_lineups.order_by('day')
-    context = {'team': team, 'lineups': lineups, 'user': request.user}
+    context = {'team': team, 'lineups': lineups,
+               'user': request.user, 'league': league}
     if request.GET.get('new lineup'):
-        return redirect('upload_lineup', team.id)
+        return redirect('upload_lineup', league.id, team.id)
     if request.GET.get('new trade'):
         return redirect('trade', team.id)
     return render(request, 'fantalega/team.html', context)
@@ -66,8 +70,8 @@ def team_details(request, team_id):
 
 @login_required
 def players(request):
-    players = Player.objects.order_by('code')
-    context = {'players': players}
+    sorted_players = Player.objects.order_by('code')
+    context = {'players': sorted_players}
     return render(request, 'fantalega/players.html', context)
 
 
@@ -82,11 +86,12 @@ def player_details(request, player_id):
 @login_required
 def auction(request, league_id):
     league = League.objects.get(pk=int(league_id))
-    players = [(p.code, p.name) for p in Player.objects.all() if not p.team]
-    teams = [(team.id, team.name) for team in league.team_set.all()]
+    free_players = [(p.code, p.name) for p in Player.objects.all()
+                    if not p.team]
+    league_teams = [(team.id, team.name) for team in league.team_set.all()]
     if request.method == "POST":
-        form = AuctionPlayer(request.POST, initial={'players': players,
-                                                    'teams': teams})
+        form = AuctionPlayer(request.POST, initial={'players': free_players,
+                                                    'teams': league_teams})
         if form.is_valid():
             player_code = form.cleaned_data['player']
             player = Player.get_by_code(int(player_code))
@@ -102,30 +107,32 @@ def auction(request, league_id):
                 player.save()
                 team.budget -= auction_value
                 team.save()
-                messages.add_message(request, messages.SUCCESS,
-                                     'Auction operation [ %s - %s ] stored!' %
-                                     (player.name, team.name))
+                messages.success(request,
+                                 'Auction operation [ %s - %s ] stored!' %
+                                 (player.name, team.name))
             else:
-                messages.add_message(request, messages.ERROR,
-                    "Not enough budget: budget: %s, auction price %s, "
-                    "remaining players %s" % (team.budget, auction_value,
-                                              remaining_players))
+                messages.error(request,
+                               "Not enough budget: budget: %s, "
+                               "auction price %s, remaining players %s" %
+                               (team.budget, auction_value, remaining_players))
             return redirect('auction', league.id)
     else:
-        form = AuctionPlayer(initial={'players': players, 'teams': teams})
+        form = AuctionPlayer(initial={'players': free_players,
+                                      'teams': league_teams})
     return render(request, 'fantalega/auction.html',
-                  {'form': form, 'players': players, 'teams': teams})
+                  {'form': form, 'players': free_players,
+                   'teams': league_teams, 'league': league}, )
 
 
 @login_required
 def trade(request, team_id):
     team = Team.objects.get(pk=int(team_id))
-    players = [(p.code, "%s - %s" % (p.name, p.role))
-               for p in team.player_set.all()]
+    team_players = [(p.code, "%s - %s" % (p.name, p.role))
+                    for p in team.player_set.all()]
     others = [(p.code, "%s - %s" % (p.name, p.role))
               for p in Player.objects.order_by('name')if p.team]
     if request.method == "POST":
-        form = TradeForm(request.POST, initial={'players': players,
+        form = TradeForm(request.POST, initial={'players': team_players,
                                                 'others': others})
         if form.is_valid():
             player_out_code = form.cleaned_data['player_out']
@@ -151,26 +158,30 @@ def trade(request, team_id):
                                          direction="IN")
                     Trade.objects.create(player=player_in, team=other_team,
                                          direction="OUT")
-                    messages.add_message(request, messages.SUCCESS,
-                        'Trade operation %s: --> [OUT] %s [IN] %s stored!' % (
-                            team, player_out.name, player_in.name))
-                    messages.add_message(request, messages.SUCCESS,
-                        'Trade operation %s: --> [OUT] %s [IN] %s stored!' % (
-                            other_team, player_in.name, player_out.name))
+                    messages.success(request,
+                                     'Trade operation %s: --> '
+                                     '[OUT] %s [IN] %s stored!' %
+                                     (team, player_out.name, player_in.name))
+                    messages.success(request,
+                                     'Trade operation %s: --> '
+                                     '[OUT] %s [IN] %s stored!' %
+                                     (other_team, player_in.name,
+                                      player_out.name))
                 else:
-                    messages.add_message(request, messages.ERROR,
-                        'Players MUST have the same role, aborted!')
+                    messages.error(request,
+                                   'Players MUST have the same role, aborted!')
 
             else:
-                messages.add_message(request, messages.ERROR,
-                    "Not enough trade operations: %s [%s] and %s [%s]" % (
-                        team.name, team.max_trades, other_team.name,
-                        other_team.max_trades))
+                messages.error(request,
+                               "Not enough trade operations: "
+                               "%s [%s] and %s [%s]" %
+                               (team.name, team.max_trades, other_team.name,
+                                other_team.max_trades))
             return redirect('team_details', team.id)
     else:
-        form = TradeForm(initial={'players': players, 'others': others})
+        form = TradeForm(initial={'players': team_players, 'others': others})
     return render(request, 'fantalega/trade.html',
-                  {'form': form, 'players': players, 'others': others,
+                  {'form': form, 'players': team_players, 'others': others,
                    'team': team})
 
 
@@ -183,21 +194,20 @@ def trades(request):
 @login_required
 def calendar(request, league_id):
     league = League.objects.get(id=int(league_id))
-    matches = league.matches.order_by('day')
-    if matches:
-        messages.add_message(request, messages.WARNING,
-                             'Calendar already exists!!')
+    league_matches = league.matches.order_by('day')
+    if league_matches:
+        messages.warning(request, 'Calendar already exists!!')
     else:
-        teams = [t for t in league.team_set.all()]
-        cal = create_season(teams=teams, num=league.rounds)
+        league_teams = [t for t in league.team_set.all()]
+        cal = create_season(teams=league_teams, num=league.rounds)
         for record in cal:
             day, home_team, visit_team = record
             Match.objects.create(league=league, day=day, home_team=home_team,
                                  visit_team=visit_team)
-        messages.add_message(request, messages.SUCCESS, 'Calendar done!')
-        matches = league.matches.order_by('day')
+        messages.success(request, 'Calendar done!')
+        league_matches = league.matches.order_by('day')
 
-    context = {'matches': matches, 'league': league}
+    context = {'matches': league_matches, 'league': league}
     return render(request, 'fantalega/calendar.html', context)
 
 
@@ -218,7 +228,7 @@ def upload_votes(request, league_id):
             day = form.cleaned_data['day']
             file_in = request.FILES['file_in']
             Evaluation.upload(path=file_in, day=day, league=league)
-            messages.add_message(request, messages.SUCCESS, 'votes uploaded!')
+            messages.success(request, 'votes uploaded!')
             return redirect('league_details', league.id)
     else:
         form = UploadVotesForm()
@@ -227,47 +237,53 @@ def upload_votes(request, league_id):
 
 
 @login_required
-def lineup_details(request, team_id, day):
+def lineup_details(request, league_id, team_id, day):
+    league = League.objects.get(pk=int(league_id))
+    total = 0.0
     team = Team.objects.get(pk=team_id)
     offset = team.leagues.all()[0].offset
     fantaday = int(day) + int(offset)
     lineup = team.team_lineups.filter(day=int(day)).first()
-    players = LineupsPlayers.get_sorted_lineup(lineup)
-    holders = [l_p.player for l_p in players[:11]]
-    substitutes = [s_p.player for s_p in players[11:]]
+    lineup_players = LineupsPlayers.get_sorted_lineup(lineup)
+    holders = [l_p.player for l_p in lineup_players[:11]]
+    substitutes = [s_p.player for s_p in lineup_players[11:]]
     d_votes = {code: (fv, v) for code, fv, v in
                [Evaluation.get_evaluations(day=(int(day) + offset),
                                            code=p.code) for p in holders]}
     if request.GET.get('modify lineup'):
-        return redirect('lineup_edit', team.id, day)
+        return redirect('lineup_edit', league.id, team.id, day)
     if request.GET.get('calculate'):
-        handler = LineupHandler(lineup, int(day), int(offset))
-        total = handler.get_pts()
-        print total
-        #        do stuff with total
-        #        return redirect('upload_lineup', team.id)
+        try:
+            handler = LineupHandler(lineup, int(day), int(offset))
+            total = handler.get_pts()
+        except AttributeError:
+            messages.error(request, 'No pts available: '
+                                    'lineups or evaluations are missing, '
+                                    'check in calendar...')
+            total = ''
 
     context = {'team': team, 'holders': holders, 'substitutes': substitutes,
                'lineup': lineup, 'day': day, 'd_votes': d_votes,
-               'fantaday': fantaday}
+               'fantaday': fantaday, 'total': total, 'league': league}
     return render(request, 'fantalega/lineup.html', context)
 
 
 @login_required
-def upload_lineup(request, team_id, day=None):
+def upload_lineup(request, league_id, team_id, day=None):
+    league = League.objects.get(pk=int(league_id))
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
     team = Team.objects.get(pk=int(team_id))
-    players = [(p.code, "%s [%s]" % (p.name, p.role))
-               for p in team.player_set.all()]
+    team_players = [(p.code, "%s [%s]" % (p.name, p.role))
+                    for p in team.player_set.all()]
     if request.method == "POST":
         form = UploadLineupForm(request.POST,
-                                initial={'players': players, 'team': team,
+                                initial={'players': team_players, 'team': team,
                                          'modules': modules, 'day': day})
         if form.is_valid():
             day = form.cleaned_data['day']
-            module_id = form.cleaned_data['module']
-            module = dict(form.fields['module'].choices)[int(module_id)]
+#            module_id = form.cleaned_data['module']
+#            module = dict(form.fields['module'].choices)[int(module_id)]
             holders = [Player.get_by_code(int(code)) for code in
                        form.cleaned_data['holders']]
             substitutes = [Player.get_by_code(int(code)) for code in
@@ -275,10 +291,9 @@ def upload_lineup(request, team_id, day=None):
                             for n in range(1, 11)]]
             error = form.check_holders()
             if error:
-                messages.add_message(request, messages.ERROR, error)
+                messages.error(request, error)
             else:
-                messages.add_message(request, messages.SUCCESS,
-                                     "Lineup correct!")
+                messages.success(request, "Lineup correct!")
                 lineup = Lineup.objects.filter(team=team, day=day).first()
                 if not lineup:
                     lineup = Lineup.objects.create(team=team, day=day,
@@ -286,32 +301,33 @@ def upload_lineup(request, team_id, day=None):
                     for pos, player in enumerate((holders + substitutes), 1):
                         LineupsPlayers.objects.create(
                             position=pos, lineup=lineup, player=player)
-                messages.add_message(request, messages.SUCCESS,
-                                     'Lineup uploaded!')
-                return redirect('team_details', team_id)
+                messages.success(request, 'Lineup uploaded!')
+                return redirect('team_details', league_id, team_id)
     else:
-        form = UploadLineupForm(initial={'players': players, 'team': team,
+        form = UploadLineupForm(initial={'players': team_players, 'team': team,
                                          'modules': modules, 'day': day})
     return render(request, 'fantalega/upload_lineup.html',
-                  {'form': form, 'players': players, 'team': team})
+                  {'form': form, 'players': team_players, 'team': team,
+                   'league': league})
 
 
 @login_required
-def lineup_edit(request, team_id, day):
+def lineup_edit(request, league_id, team_id, day):
+    league = League.objects.get(pk=int(league_id))
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
     team = Team.objects.get(pk=int(team_id))
     lineup = team.team_lineups.filter(day=day).first()
-    players = [(p.code, "%s [%s]" % (p.name, p.role))
-               for p in team.player_set.all()]
+    team_players = [(p.code, "%s [%s]" % (p.name, p.role))
+                    for p in team.player_set.all()]
     if request.method == "POST":
         form = UploadLineupForm(request.POST,
-                                initial={'players': players, 'team': team,
+                                initial={'players': team_players, 'team': team,
                                          'modules': modules, 'day': day})
         if form.is_valid():
             day = form.cleaned_data['day']
-            module_id = form.cleaned_data['module']
-            module = dict(form.fields['module'].choices)[int(module_id)]
+#            module_id = form.cleaned_data['module']
+#            module = dict(form.fields['module'].choices)[int(module_id)]
             holders = [Player.get_by_code(int(code)) for code in
                        form.cleaned_data['holders']]
             substitutes = [Player.get_by_code(int(code)) for code in
@@ -319,10 +335,9 @@ def lineup_edit(request, team_id, day):
                             for n in range(1, 11)]]
             error = form.check_holders()
             if error:
-                messages.add_message(request, messages.ERROR, error)
+                messages.error(request, error)
             else:
-                messages.add_message(request, messages.SUCCESS,
-                                     "Lineup correct!")
+                messages.success(request, "Lineup correct!")
                 lineup.timestamp = datetime.now()
                 lineup.save()
                 for pos, player in enumerate((holders + substitutes), 1):
@@ -333,57 +348,54 @@ def lineup_edit(request, team_id, day):
                     print "[INFO] Lineup %s (%s) -> Player %s pos %s upgraded!"\
                           % (team.name, day, player.name, pos)
 
-                messages.add_message(request, messages.SUCCESS,
-                                     'Lineup upgraded!')
+                messages.success(request, 'Lineup upgraded!')
                 return redirect('team_details', team_id)
     else:
-        form = UploadLineupForm(initial={'players': players, 'team': team,
+        form = UploadLineupForm(initial={'players': team_players, 'team': team,
                                          'modules': modules, 'day': day})
         for n, player in enumerate(lineup.players.all()[11:], 1):
             form.fields['substitute_%s' % n].initial = player.code
         form.fields['holders'].initial = [p.code for p in
                                           lineup.players.all()[:11]]
     return render(request, 'fantalega/upload_lineup.html',
-                  {'form': form, 'players': players, 'team': team})
+                  {'form': form, 'players': team_players, 'team': team,
+                   'league': league})
 
 
 @login_required
 def matches(request, league_id):
     league = League.objects.get(id=int(league_id))
-    matches = league.matches
+    league_matches = league.matches
     days = [d['day'] for d in Match.objects.values('day').distinct()]
     d_calendar = Match.calendar_to_dict(league)
     context = {'league': league, 'd_calendar': d_calendar,
-               'days': days, 'matches': matches}
+               'days': days, 'matches': league_matches}
     return render(request, 'fantalega/matches.html', context)
 
 
 @login_required
 def match_details(request, league_id, day):
     league = League.objects.get(pk=int(league_id))
-    matches = league.matches.filter(day=int(day))
+    league_matches = league.matches.filter(day=int(day))
     missing_lineups = []
     if request.GET.get('calculate'):
-        for match in matches:
+        for match in league_matches:
             home_lineup = match.home_team.team_lineups.filter(
                 day=int(day)).first()
             visit_lineup = match.visit_team.team_lineups.filter(
                 day=int(day)).first()
-            if not home_lineup:
-                missing_lineups.append(match.home_team.name)
-                messages.add_message(request, messages.ERROR,
-                                     'Lineup %s missing!' %
-                                     match.home_team.name)
-            elif not visit_lineup:
-                missing_lineups.append(match.visit_team.name)
-                messages.add_message(request, messages.ERROR,
-                                     'Lineup %s missing!' %
-                                     match.visit_team.name)
-            else:
+            offset_day = int(day) + league.offset
+            if Evaluation.objects.filter(day=offset_day).count() == 0:
+                messages.error(request,
+                               'day %s evaluations missing, import them!' %
+                               offset_day)
+                return redirect('matches', league.id)
+
+            if home_lineup and visit_lineup:
                 h_home = LineupHandler(home_lineup, int(day),
-                    int(league.offset))
+                                       int(league.offset))
                 h_visit = LineupHandler(visit_lineup, int(day),
-                    int(league.offset))
+                                        int(league.offset))
                 home_pts = h_home.get_pts() + 2
                 visit_pts = h_visit.get_pts()
                 home_goals, visit_goals = get_final(home_pts, visit_pts)
@@ -399,25 +411,31 @@ def match_details(request, league_id, day):
                     lineup.goals_made = data.get("%sgm" % prefix)
                     lineup.goals_conceded = data.get("%sgc" % prefix)
                     lineup.save()
-            if missing_lineups:
-                messages.add_message(request, messages.ERROR,
-                                     'Some Lineups are missing: %s' %
-                                     ', '.join(missing_lineups))
-                return redirect('league_details', league.id)
-        messages.add_message(request, messages.SUCCESS,
-                     'All Lineup values are upgraded!')
+            else:
+                if not home_lineup:
+                    missing_lineups.append(match.home_team.name)
+                if not visit_lineup:
+                    missing_lineups.append(match.visit_team.name)
+        if not missing_lineups:
+            messages.success(request, 'All Lineup values are upgraded!')
+        else:
+            if len(missing_lineups) == league.team_set.count():
+                message = 'No lineups uploaded for day %s yet' % day
+            else:
+                message = 'Some Lineups are missing: %s' % \
+                          ', '.join(missing_lineups)
+            messages.error(request, message)
         return redirect('matches', league.id)
-
-    context = {'league': league, 'matches': matches, 'day': day}
+    context = {'league': league, 'matches': league_matches, 'day': day}
     return render(request, 'fantalega/match.html', context)
 
 
 @login_required
 def chart(request, league_id):
     league = League.objects.get(id=int(league_id))
-    teams = league.team_set.all()
+    league_teams = league.team_set.all()
     lineups_values = []
-    for team in teams:
+    for team in league_teams:
         lineups = [lineup for lineup in team.team_lineups.all() if lineup.pts]
         won = sum([lineup.won for lineup in lineups])
         matched = sum([lineup.matched for lineup in lineups])

@@ -3,6 +3,9 @@
 
 {% block content %}
     <b>Upload lineup for <font color="red">{{ team.name }}</font></b>
+        <a href="{% url 'team_details' league.id team.id %}">
+            <b>< back to {{ team.name }}</b></a>
+
     <form method="POST" class="form">
 		{% csrf_token %}
         <div id="container" style="width:100%;">

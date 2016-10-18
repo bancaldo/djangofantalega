@@ -10,9 +10,9 @@
     {% if matches %}
       {% for match in matches %}
         <tr>
-        <td><a href="{% url 'team_details' match.home_team.id %}">
+        <td><a href="{% url 'team_details' league.id match.home_team.id %}">
         {{ match.home_team }}</a></td>
-        <td><a href="{% url 'team_details' match.visit_team.id %}">
+        <td><a href="{% url 'team_details' league.id match.visit_team.id %}">
         {{ match.visit_team }}</a></td>
         <td>{{ match.home_team|get_goals:day }}</td>
         <td>{{ match.visit_team|get_goals:day }}</td>
@@ -20,9 +20,11 @@
       {% endfor %}
     </table>
         <a href="{% url 'matches' league.id %}">...return to calendar</a><br><br>
+        {% if user.is_staff %}
         <form>
             <input type="submit" class="btn" value="calculate" name="calculate">
         </form>
+        {% endif %}
     {% else %}
       <p>No match found.</p>
     {% endif %}

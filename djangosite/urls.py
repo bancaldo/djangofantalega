@@ -25,7 +25,6 @@ urlpatterns = [
     url(r'^login/$', auth_views.login,
         {'template_name': 'registration/login.html'},
         name='django.contrib.auth.views.login'),  # auth system
-    #url(r'^login/$', auth_views.login, name='login'),
     url(r'^logout/$', auth_views.logout,
         {'template_name': 'registration/logged_out.html'},
         name='logout'),  # auth system

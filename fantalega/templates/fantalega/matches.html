@@ -6,6 +6,8 @@
     <h1>List of all matches for
         <font color="green">{{ league.name }}</font>
     </h1>
+        <a href="{% url 'league_details' league.id %}">
+            <b>< back to {{ league.name }}</b></a>
 
     <table class="table table-striped" width="100%">
       {% for day in days %}
