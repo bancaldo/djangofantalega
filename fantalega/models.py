@@ -241,6 +241,7 @@ class Evaluation(models.Model):
 
 
 class Lineup (models.Model):
+    league = models.ForeignKey(League, related_name='league_lineups')
     team = models.ForeignKey(Team, related_name='team_lineups')
     players = models.ManyToManyField(Player, through='LineupsPlayers',
                                      related_name='player_lineups')
@@ -273,6 +274,7 @@ class Lineup (models.Model):
                 ex = LEx(path, team.name, day)
                 players = ex.extract()
                 lineup = Lineup.objects.create(team=team, day=day,
+                                               league=league,
                                                timestamp=datetime.now())
                 for pos, player in enumerate(players, 1):
                     if player:

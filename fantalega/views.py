@@ -58,7 +58,7 @@ def teams(request, league_id):
 def team_details(request, league_id, team_id):
     league = League.objects.get(pk=int(league_id))
     team = Team.objects.get(id=int(team_id))
-    lineups = team.team_lineups.order_by('day')
+    lineups = Lineup.objects.filter(team=team, league=league).order_by('day')
     context = {'team': team, 'lineups': lineups,
                'user': request.user, 'league': league}
     if request.GET.get('new lineup'):
@@ -294,9 +294,11 @@ def upload_lineup(request, league_id, team_id, day=None):
                 messages.error(request, error)
             else:
                 messages.success(request, "Lineup correct!")
-                lineup = Lineup.objects.filter(team=team, day=day).first()
+                lineup = Lineup.objects.filter(
+                    team=team, day=day, league=league).first()
                 if not lineup:
                     lineup = Lineup.objects.create(team=team, day=day,
+                                                   league=league,
                                                    timestamp=datetime.now())
                     for pos, player in enumerate((holders + substitutes), 1):
                         LineupsPlayers.objects.create(
@@ -317,7 +319,8 @@ def lineup_edit(request, league_id, team_id, day):
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
     team = Team.objects.get(pk=int(team_id))
-    lineup = team.team_lineups.filter(day=day).first()
+#    lineup = team.team_lineups.filter(day=day).first()
+    lineup = Lineup.objects.filter(team=team, league=league, day=day).first()
     team_players = [(p.code, "%s [%s]" % (p.name, p.role))
                     for p in team.player_set.all()]
     if request.method == "POST":
@@ -366,7 +369,8 @@ def lineup_edit(request, league_id, team_id, day):
 def matches(request, league_id):
     league = League.objects.get(id=int(league_id))
     league_matches = league.matches
-    days = [d['day'] for d in Match.objects.values('day').distinct()]
+    days = [d['day'] for d in Match.objects.filter(
+        league=league).values('day').distinct()]
     d_calendar = Match.calendar_to_dict(league)
     context = {'league': league, 'd_calendar': d_calendar,
                'days': days, 'matches': league_matches}
@@ -436,7 +440,9 @@ def chart(request, league_id):
     league_teams = league.team_set.all()
     lineups_values = []
     for team in league_teams:
-        lineups = [lineup for lineup in team.team_lineups.all() if lineup.pts]
+        lineups = [lineup for lineup in
+                   Lineup.objects.filter(league=league, team=team).all()
+                   if lineup.pts]
         won = sum([lineup.won for lineup in lineups])
         matched = sum([lineup.matched for lineup in lineups])
         lost = sum([lineup.lost for lineup in lineups])

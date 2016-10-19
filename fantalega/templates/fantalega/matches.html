@@ -14,7 +14,14 @@
           <tr>
               <th colspan="2">
               <a href="{% url 'match_details' league.id day %}">
-              giornata {{ day }}</a></th>
+              giornata {{ day }}</a>
+                  {% if league|need_calc:day %}
+                    {% if not league|has_pts:day %}
+                      <font color="green"> ....click to calculate</font>
+                    {% endif %}
+                  {% else %} <font color="purple">....lineups missing</font>
+                  {% endif %}
+              </th>
           </tr>
           {% get_matches matches day as f_matches %}
           {% for match in f_matches %}

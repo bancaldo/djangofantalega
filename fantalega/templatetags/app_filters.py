@@ -1,6 +1,7 @@
 # noinspection PyUnresolvedReferences
 from django import template
 from django.utils.safestring import mark_safe
+from fantalega.models import Lineup
 
 
 register = template.Library()
@@ -31,6 +32,23 @@ def get_pts(team, day):
         return lineup.pts
     else:
         return "ND"
+
+
+@register.filter(name='need_calc')
+def need_calc(league, day):
+    for team in league.team_set.all():
+        if not team.team_lineups.filter(day=day).first():
+            return False
+    return True
+
+
+@register.filter(name='has_pts')
+def has_pts(league, day):
+    lineups = [Lineup.objects.filter(team=team, league=league, day=day).first()
+               for team in league.team_set.all() if
+               Lineup.objects.filter(team=team, league=league, day=day).first()]
+    calculated_lineups = [l.pts for l in lineups if l.pts > 0]
+    return len(calculated_lineups) == len(league.team_set.all())
 
 
 @register.filter(name='get_goals')
