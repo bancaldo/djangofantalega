@@ -3,8 +3,8 @@
 {% load app_filters %}
 
 {% block content %}
-    <h1><font color="green">{{ league.name }}</font>
-    match {{ day }}</h1>
+    <b><font color="green">{{ league.name }}</font>:
+        <font color="purple">giornata {{ day }}</font></b><br>
 
     <table class="table table-striped" width="100%">
     {% if matches %}
@@ -19,7 +19,10 @@
         </tr>
       {% endfor %}
     </table>
-        <a href="{% url 'matches' league.id %}">...return to calendar</a><br><br>
+    <form action="#" method="get">
+      <input type="submit" class="btn" value="back to calendar"
+             name="back_to_calendar">
+    </form>
         {% if user.is_staff %}
         <form>
             <input type="submit" class="btn" value="calculate" name="calculate">

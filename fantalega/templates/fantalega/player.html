@@ -1,9 +1,7 @@
 {% extends 'fantalega/base.html' %}
 
 {% block content %}
-	<font face="Arial">
 		<h1><font color="green">{{ player.name }}</font></h1>
-	</font>
 
 	<table class="table table-striped" width="100%">
 	  <tr>
@@ -12,6 +10,7 @@
 		  <th>role</th>
 		  <th>cost</th>
 		  <th>auction value</th>
+		  <th>season</th>
 	  </tr>
 	  <tr>
 		  <td>{{ player.code }}</td>
@@ -19,12 +18,12 @@
 		  <td>{{ player.role }}</td>
 		  <td>{{ player.cost }}</td>
 		  <td>{{ player.auction_value }}</td>
+		  <td>{{ player.season }}</td>
 	  </tr>
 	</table>
     <br>
-    <b><font color="orange">votes</font></a></b>
+    <b><font color="orange">votes</font></b>
     <br>
-
 	<table class="table table-striped" width="100%">
 	  <tr>
 		  <th>day</th>

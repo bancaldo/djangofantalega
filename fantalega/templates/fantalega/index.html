@@ -1,8 +1,11 @@
 {% extends "fantalega/base.html" %}
 {% block content %}
-    <font face="Arial">
-        <h1><font color="green">Bancaldo Fantalega</h1></font>
-            <br>
-            <font color="orange"><b>You are welcome!</b></font>
-    </font>
+  <h1><font color="green">Fantalega</font></h1><br>
+  {% if user %}
+    <b><font color="blue">{{ user.username }}, </font>
+       <font color="orange">you are welcome!</font>
+    </b>
+  {% else %}
+    <font color="orange"><b>please login!</b></font>
+  {% endif %}
 {% endblock %}

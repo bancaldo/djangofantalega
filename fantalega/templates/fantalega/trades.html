@@ -1,16 +1,32 @@
 {% extends 'fantalega/base.html' %}
 
-
 {% block content %}
-    <font face="Arial">
-        <h1><font color="green">List of all trade operations</font></h1>
+    <b>List of all trade operations for <font color="green">
+        {{ league.name }}</font></b>
+    <br><br>
+    <form action="#" method="get">
+    <input type="submit" class="btn"
+           value="back to {{ league.name }} details" name="back_to_teams">
+    </form>
+
     {% if trades %}
-    <ul>
-      {% for trade in trades %}
-      <li>[{{ trade.direction }}]: {{ trade.team.name }} {{ trade.player.name }}</li>
-      {% endfor %}
-    </ul>
+        <table class="table table-striped" width="100%">
+          <tr>
+              <th>in/out</th>
+              <th>name</th>
+              <th>team</th>
+          </tr>
+          <tr>
+          {% for trade in trades %}
+              <td>{{ trade.direction }}</td>
+              <td><a href="{% url 'team_details' league.id trade.team.id %}">
+                  {{ trade.team.name }}</a></td>
+              <td><a href="{% url 'player_details' trade.player.id %}">
+                  {{ trade.player.name }}</a></td>
+          </tr>
+          {% endfor %}
+        </table>
     {% else %}
-      <p>No trade found.</p>
-    {% endif %}</font>
+        <font color="red"><b>No trade operations found.</b></font>
+    {% endif %}
 {% endblock %}

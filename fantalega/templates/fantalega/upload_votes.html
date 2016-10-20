@@ -2,16 +2,17 @@
 {% load bootstrap3 %}
 
 {% block content %}
-    <h1>Upload votes for <font color="green">{{ league.name }}</font></h1>
-        <a href="{% url 'league_details' league.id %}">
-            <b>< back to {{ league.name }}</b></a>
-
+    <h1>Upload votes for <font color="green">{{ league.name }}</font></h1><br>
+    <form action="#" method="get">
+    <input type="submit" class="btn"
+           value="back to {{ league.name }} teams" name="back_to_teams">
+    </form>
     <form enctype="multipart/form-data" method="POST" class="form">
 		{% csrf_token %}
         {% bootstrap_form form %}
             {% buttons %}
                 <button type="submit" class="btn btn-primary">
-                {% bootstrap_icon "upload" %} Upload
+                {% bootstrap_icon "upload" %} Upload</button>
 			{% endbuttons %}
     </form>
 {% endblock %}

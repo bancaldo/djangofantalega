@@ -62,7 +62,7 @@ class MatchAdmin(admin.ModelAdmin):
 class PlayerAdmin(admin.ModelAdmin):
     ordering = ('code', )
     list_display = ('code', 'name', 'real_team', 'cost')
-    list_filter = ('role', 'team')
+    list_filter = ('season', 'role', 'team')
     list_per_page = 20
 
 

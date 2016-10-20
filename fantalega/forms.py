@@ -36,6 +36,9 @@ class TradeForm(forms.Form):
 
 class UploadVotesForm(forms.Form):
     day = forms.IntegerField()
+    seasons = enumerate(['%s-%s' %(n, n + 1) for n in range(2016, 2030)], )
+    season = forms.ChoiceField(label=u'season', choices=seasons,
+                widget=forms.Select(),)
     file_in = forms.FileField()
 
 

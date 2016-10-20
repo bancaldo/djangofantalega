@@ -2,14 +2,19 @@
 {% load bootstrap3 %}
 
 {% block content %}
-    <h1>New Trade Operation for team:<br>
-        <font color="green">{{ team.name }}</font></h1>
+    <b>New Trade Operation for team: <font color="green">{{ team.name }}</font></b>
+    <br><br>
+    <form action="#" method="get">
+    <input type="submit" class="btn"
+           value="back to {{ team.name }} team" name="back_to_team_details">
+    </form>
+
     <form method="POST" class="form">
 		{% csrf_token %}
         {% bootstrap_form form %}
             {% buttons %}
                 <button type="submit" class="btn btn-primary">
-                {% bootstrap_icon "save" %} Submit
+                {% bootstrap_icon "save" %} Submit</button>
 			{% endbuttons %}
     </form>
 {% endblock %}

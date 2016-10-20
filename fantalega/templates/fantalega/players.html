@@ -1,8 +1,7 @@
 {% extends 'fantalega/base.html' %}
 
 {% block content %}
-    <font face="Arial">
-        <h1><font color="green">List of Players</font></h1>
+        <font color="green"><b>List of all players</b></font><br><br>
     {% if players %}
         <table class="table table-striped" width="100%">
           <tr>
@@ -10,6 +9,7 @@
               <th>name</th>
               <th>team</th>
               <th>fanta team</th>
+              <th>season</th>
           </tr>
           <tr>
               {% for player in players %}
@@ -18,10 +18,11 @@
                       {{ player.name }}</a></td>
                   <td>{{ player.real_team }}</td>
                   <td>{{ player.team.name }}</td>
+                  <td>{{ player.season }}</td>
           </tr>
               {% endfor %}
         </table>
     {% else %}
-      <p>No player found.</p>
-    {% endif %}</font>
+      <font color="red"><b>No players found.</b></font>
+    {% endif %}
 {% endblock %}

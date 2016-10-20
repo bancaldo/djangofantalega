@@ -1,19 +1,32 @@
 {% extends 'fantalega/base.html' %}
 {% load bootstrap3 %}
+{% load app_filters %}
 
 {% block content %}
-    <h1>List of all matches for <font color="green">
-        {{ league.name }}</font></h1>
-        <a href="{% url 'league_details' league.id %}">
-            <b>< back to {{ league.name }}</b></a>
+    <b>List of all matches for <font color="green">
+        {{ league.name }}</font></b><br><br>
 
+    <form action="#" method="get">
+     <input type="submit" class="btn" value="back to {{ league.name }} teams"
+            name="back_to_teams">
+    </form>
     {% if matches %}
-    <ul>
-      {% for match in matches %}
-      <li><b>giornata {{ match.day }}</b>: <font color="blue">{{ match.home_team.name }}</font> - <font color="red">{{ match.visit_team.name }}</font></li>
+
+    <table class="table table-striped" width="100%">
+      {% for day in days %}
+          <tr>
+              <th colspan="2"><font color="purple">giornata {{ day }}</font></th>
+          </tr>
+          {% get_matches matches day as f_matches %}
+          {% for match in f_matches %}
+          <tr>
+              <td align="left">{{ match.home_team.name }}</td>
+              <td align="left">{{ match.visit_team.name }}</td>
+          </tr>
+          {% endfor %}
       {% endfor %}
-    </ul>
+    </table>
     {% else %}
-      <p>No calendar found.</p>
+      <font color="red"><b>No calendar/matches found.</b></font>
     {% endif %}
 {% endblock %}

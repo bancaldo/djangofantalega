@@ -2,9 +2,12 @@
 {% load bootstrap3 %}
 
 {% block content %}
-    <b>Upload lineup for <font color="red">{{ team.name }}</font></b>
-        <a href="{% url 'team_details' league.id team.id %}">
-            <b>< back to {{ team.name }}</b></a>
+    <b>Upload lineup for <font color="green">{{ team.name }}</font></b>
+    <br><br>
+    <form action="#" method="get">
+    <input type="submit" class="btn"
+           value="back to {{ team.name }} team" name="back_to_team_details">
+    </form>
 
     <form method="POST" class="form">
 		{% csrf_token %}
@@ -31,8 +34,7 @@
         <div>
             {% buttons %}
                 <button type="submit" class="btn btn-primary">
-                    {% bootstrap_icon "save" %} upload
-                </button>
+                    {% bootstrap_icon "save" %} upload</button>
 			{% endbuttons %}
         </div>
     </form>

@@ -58,8 +58,14 @@
                           name="upload votes">
                   </form>
                 {% endif %}
-                <b><a href="{% url 'matches' league.id %}">view calendar</a></b><br>
-                <b><a href="{% url 'chart' league.id %}">view chart</a></b><br>
+              <form action="#" method="get">
+                <input type="submit" class="btn" value="view Calendar"
+                      name="matches">
+                <input type="submit" class="btn" value="view Chart"
+                      name="chart">
+                <input type="submit" class="btn" value="view trades"
+                      name="trades">
+              </form>
             </div>
         </div>
 {% endblock %}

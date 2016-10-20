@@ -2,10 +2,11 @@
 {% load bootstrap3 %}
 
 {% block content %}
-		<h1><font color="green">{{ league.name }}</font></h1>
-        <a href="{% url 'league_details' league.id %}">
-            <b>< back to {{ league.name }}</b></a>
-
+	<h1><font color="green">{{ league.name }}</font></h1>
+    <form action="#" method="get">
+    <input type="submit" class="btn"
+           value="back to {{ league.name }} teams" name="back_to_teams">
+    </form>
 
     <table class="table table-striped" width="100%">
       <tr>

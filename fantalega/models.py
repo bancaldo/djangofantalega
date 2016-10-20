@@ -17,6 +17,7 @@ class League(models.Model):
     max_forwards = models.IntegerField()
     rounds = models.IntegerField()
     offset = models.IntegerField()
+    season = models.CharField(max_length=9, null=True)
 
     def max_players(self):
         return self.max_goalkeepers + self.max_defenders + \
@@ -87,13 +88,14 @@ class Player(models.Model):
     auction_value = models.IntegerField()
     role = models.CharField(max_length=16)
     team = models.ForeignKey(Team, null=True)
+    season = models.CharField(max_length=9, null=True)
 
     def __unicode__(self):
         return self.name
 
     @staticmethod
-    def get_by_code(code):
-        return Player.objects.filter(code=int(code)).first()
+    def get_by_code(code, season):
+        return Player.objects.filter(code=int(code), season=season).first()
 
     @staticmethod
     def code_to_role(code):
@@ -108,27 +110,9 @@ class Player(models.Model):
         else:
             return 'unknown'
 
-    @staticmethod
-    def upload(path):
-        with open(path) as data:
-            for record in data:  # nnn|PLAYER_NAME|REAL_TEAM|x|y|n
-                code, name, real_team, fv, v, cost = record.strip().split("|")
-                player = Player.get_by_code(code)
-                role = Player.code_to_role(code.strip())
-                if not player:
-                    Player.objects.create(name=name, code=code, role=role,
-                                          real_team=real_team, cost=cost,
-                                          auction_value=0)
-                    print "[INFO] Creating %s %s" % (code, name)
-                else:
-                    player.cost = cost
-                    player.real_team = real_team
-                    player.save()
-                    print "[INFO] Upgrading %s %s" % (code, name)
-        print "[INFO] Players uploading done!"
-
 
 class Trade(models.Model):
+    league = models.ForeignKey(League, related_name='trades')
     player = models.ForeignKey(Player)
     team = models.ForeignKey(Team)
     direction = models.CharField(max_length=3)  # IN or OUT value
@@ -204,17 +188,17 @@ class Evaluation(models.Model):
             return code, None, None
 
     @staticmethod
-    def upload(path, day, league):
+    def upload(path, day, league, season):
         # with open(path) as data:  # for shell string-file-path upload
         with path as data:  # for InMemoryUploadedFile object upload
             for record in data:  # nnn|PLAYER_NAME|REAL_TEAM|x|y|n
                 code, name, real_team, fv, v, cost = record.strip().split("|")
-                player = Player.get_by_code(code)
+                player = Player.get_by_code(code, season)
                 role = Player.code_to_role(code.strip())
                 if not player:
                     player = Player(name=name, code=code, role=role,
                                     real_team=real_team, cost=cost,
-                                    auction_value=0)
+                                    auction_value=0, season=season)
                     print "[INFO] Creating %s %s" % (code, name)
                 else:
                     player.cost = cost
@@ -279,7 +263,7 @@ class Lineup (models.Model):
                 for pos, player in enumerate(players, 1):
                     if player:
                         player_obj = Player.objects.filter(
-                            name=player.upper()).first()
+                            name=player.upper(), season=league.season).first()
                     else:
                         print "[WARNING] Player %s doesn't exist" % player
                         player_obj = [p for p in team.player_set.all()

@@ -1,8 +1,6 @@
 {% extends 'fantalega/base.html' %}
 
-
 {% block content %}
-    <font face="Arial">
         <h1><font color="green">List of LEAGUES</font></h1>
     {% if leagues %}
     <ul>
@@ -11,6 +9,6 @@
       {% endfor %}
     </ul>
     {% else %}
-      <p>No league found.</p>
-    {% endif %}</font>
+      <font color="red"><b>No league found.</b></font>
+    {% endif %}
 {% endblock %}
