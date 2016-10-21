@@ -89,7 +89,6 @@ class UploadLineupForm(forms.Form):
 
 
 class RegistrationForm(forms.Form):
-
     username = forms.RegexField(
         regex=r'^\w+$',
         widget=forms.TextInput(attrs=dict(required=True, max_length=30)),

@@ -18,7 +18,6 @@ from django.conf.urls import url, include
 # noinspection PyUnresolvedReferences
 from django.contrib import admin
 from django.contrib.auth import views as auth_views  # auth system
-from fantalega import views
 
 
 urlpatterns = [
@@ -29,7 +28,5 @@ urlpatterns = [
     url(r'^logout/$', auth_views.logout,
         {'template_name': 'registration/logged_out.html'},
         name='logout'),  # auth system
-    url(r'^registration/$', views.register_user, name='registration'),
-    url(r'^registration/success/$', views.register_success),
     url(r'^admin/', admin.site.urls),
 ]

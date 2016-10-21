@@ -7,7 +7,7 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
-    # League urls
+    # fantalega urls
     url(r'^leagues/$', views.leagues, name='leagues'),
     url(r'^leagues/(?P<league_id>[0-9]+)/$', views.league_details,
         name='league_details'),
@@ -43,4 +43,8 @@ urlpatterns = [
         views.match_details, name='match_details'),
     url(r'^leagues/(?P<league_id>[0-9]+)/chart$',
         views.chart, name='chart'),
+    # Registration urls
+    url(r'^registration/$', views.register_user, name='registration'),
+    url(r'^registration/success/$', views.register_success,
+        name='reg_success'),
 ]

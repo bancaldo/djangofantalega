@@ -499,7 +499,7 @@ def register_user(request):
                 email=form.cleaned_data['email'])
             messages.success(request, "Welcome %s now you can login" %
                              user.username)
-            return redirect ('/registration/success/')
+            return redirect ('reg_success')
         return render(request, 'registration/registration_form.html', context)
     else:
         form = RegistrationForm()
