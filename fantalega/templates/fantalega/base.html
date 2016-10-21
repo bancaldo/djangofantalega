@@ -37,7 +37,7 @@
         <ul class="nav navbar-nav navbar-right">
         {% if not user.is_anonymous %}
           <li><a class="navbar-brand"
-             href="{% url 'logout' %}?next={{ request.path }}">
+             href="{% url 'logout' %}">
           <font color="orange">logout</font></a></li>
         {% endif %}
         </ul>

@@ -1,5 +1,5 @@
 # noinspection PyUnresolvedReferences
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import League, Team, Player, Trade, Match, Evaluation
 from .models import Lineup, LineupsPlayers
 from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
@@ -25,7 +25,7 @@ def leagues(request):
 
 @login_required
 def league_details(request, league_id):
-    league = League.objects.get(id=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     league_teams = league.team_set.all()
     days = [d['day'] for d in
             Evaluation.objects.order_by('day').values('day').distinct()]
@@ -48,8 +48,8 @@ def league_details(request, league_id):
 
 @login_required
 def team_details(request, league_id, team_id):
-    league = League.objects.get(pk=int(league_id))
-    team = Team.objects.get(id=int(team_id))
+    league = get_object_or_404(League, pk=int(league_id))
+    team = get_object_or_404(Team, pk=int(team_id))
     lineups = Lineup.objects.filter(team=team, league=league).order_by('day')
     context = {'team': team, 'lineups': lineups,
                'user': request.user, 'league': league}
@@ -79,7 +79,7 @@ def player_details(request, player_id):
 
 @login_required
 def auction(request, league_id):
-    league = League.objects.get(pk=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
     free_players = [(p.code, p.name) for p in
@@ -88,13 +88,14 @@ def auction(request, league_id):
     league_teams = [(team.id, team.name) for team in league.team_set.all()]
     if request.method == "POST":
         form = AuctionPlayer(request.POST, initial={'players': free_players,
-                                                    'teams': league_teams})
+                                                    'teams': league_teams,
+                                                    'league': league})
         if form.is_valid():
             player_code = form.cleaned_data['player']
             player = Player.get_by_code(int(player_code), season=league.season)
             auction_value = form.cleaned_data['auction_value']
             team_id = form.cleaned_data['team']
-            team = Team.objects.get(pk=team_id)
+            team = Team.objects.get(pk=int(team_id))
             remaining_players = league.max_players() - team.player_set.count()
             budget_remaining = int(team.budget) - int(auction_value) - \
                 remaining_players
@@ -115,7 +116,7 @@ def auction(request, league_id):
             return redirect('auction', league.id)
     else:
         form = AuctionPlayer(initial={'players': free_players,
-                                      'teams': league_teams})
+                                      'teams': league_teams, 'league': league})
     return render(request, 'fantalega/auction.html',
                   {'form': form, 'players': free_players,
                    'teams': league_teams, 'league': league}, )
@@ -123,8 +124,8 @@ def auction(request, league_id):
 
 @login_required
 def trade(request, league_id, team_id):
-    league = League.objects.get(pk=int(league_id))
-    team = Team.objects.get(pk=int(team_id))
+    league = get_object_or_404(League, pk=int(league_id))
+    team = get_object_or_404(Team, pk=int(team_id))
     if request.GET.get('back_to_team_details'):
         return redirect('team_details', league.id, team.id)
     team_players = [(p.code, "%s - %s" % (p.name, p.role))
@@ -133,7 +134,8 @@ def trade(request, league_id, team_id):
               for p in Player.objects.order_by('name')if p.team]
     if request.method == "POST":
         form = TradeForm(request.POST, initial={'players': team_players,
-                                                'others': others})
+                                                'others': others,
+                                                'league': league})
         if form.is_valid():
             player_out_code = form.cleaned_data['player_out']
             player_out = Player.get_by_code(int(player_out_code),
@@ -181,7 +183,8 @@ def trade(request, league_id, team_id):
                                 other_team.max_trades))
             return redirect('team_details', league.id, team.id)
     else:
-        form = TradeForm(initial={'players': team_players, 'others': others})
+        form = TradeForm(initial={'players': team_players, 'others': others,
+                                  'league': league})
     return render(request, 'fantalega/trade.html',
                   {'form': form, 'players': team_players, 'others': others,
                    'team': team, 'league': league})
@@ -189,7 +192,7 @@ def trade(request, league_id, team_id):
 
 @login_required
 def trades(request, league_id):
-    league = League.objects.get(id=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
     context = {'trades': Trade.objects.all(), 'league': league}
@@ -198,7 +201,7 @@ def trades(request, league_id):
 
 @login_required
 def calendar(request, league_id):
-    league = League.objects.get(id=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
     league_matches = league.matches.order_by('day')
@@ -222,7 +225,7 @@ def calendar(request, league_id):
 
 @login_required
 def vote(request, league_id, day):
-    league = League.objects.get(pk=league_id)
+    league = get_object_or_404(League, pk=int(league_id))
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
     votes = Evaluation.objects.filter(league=league, day=day).all()
@@ -232,7 +235,7 @@ def vote(request, league_id, day):
 
 @login_required
 def upload_votes(request, league_id):
-    league = League.objects.get(pk=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
     if request.method == "POST":
@@ -254,9 +257,9 @@ def upload_votes(request, league_id):
 
 @login_required
 def lineup_details(request, league_id, team_id, day):
-    league = League.objects.get(pk=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     total = 0.0
-    team = Team.objects.get(pk=team_id)
+    team = get_object_or_404(Team, pk=int(team_id))
     offset = team.leagues.all()[0].offset
     fantaday = int(day) + int(offset)
     lineup = team.team_lineups.filter(day=int(day)).first()
@@ -286,10 +289,10 @@ def lineup_details(request, league_id, team_id, day):
 
 @login_required
 def upload_lineup(request, league_id, team_id, day=None):
-    league = League.objects.get(pk=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
-    team = Team.objects.get(pk=int(team_id))
+    team = get_object_or_404(Team, pk=int(team_id))
     if request.GET.get('back_to_team_details'):
         return redirect('team_details', league.id, team.id)
     team_players = [(p.code, "%s [%s]" % (p.name, p.role))
@@ -297,7 +300,8 @@ def upload_lineup(request, league_id, team_id, day=None):
     if request.method == "POST":
         form = UploadLineupForm(request.POST,
                                 initial={'players': team_players, 'team': team,
-                                         'modules': modules, 'day': day})
+                                         'modules': modules, 'day': day,
+                                         'league': league})
         if form.is_valid():
             day = form.cleaned_data['day']
             holders = [Player.get_by_code(int(code), season=league.season)
@@ -323,7 +327,8 @@ def upload_lineup(request, league_id, team_id, day=None):
                 return redirect('team_details', league_id, team_id)
     else:
         form = UploadLineupForm(initial={'players': team_players, 'team': team,
-                                         'modules': modules, 'day': day})
+                                         'modules': modules, 'day': day,
+                                         'league': league})
     return render(request, 'fantalega/upload_lineup.html',
                   {'form': form, 'players': team_players, 'team': team,
                    'league': league})
@@ -331,10 +336,10 @@ def upload_lineup(request, league_id, team_id, day=None):
 
 @login_required
 def lineup_edit(request, league_id, team_id, day):
-    league = League.objects.get(pk=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     modules = [(1, '343'), (2, '352'), (3, '442'), (4, '433'), (5, '451'),
                (6, '532'), (7, '541')]
-    team = Team.objects.get(pk=int(team_id))
+    team = get_object_or_404(Team, pk=int(team_id))
     if request.GET.get('back_to_team_details'):
         return redirect('team_details', league.id, team.id)
 #    lineup = team.team_lineups.filter(day=day).first()
@@ -344,7 +349,8 @@ def lineup_edit(request, league_id, team_id, day):
     if request.method == "POST":
         form = UploadLineupForm(request.POST,
                                 initial={'players': team_players, 'team': team,
-                                         'modules': modules, 'day': day})
+                                         'modules': modules, 'day': day,
+                                         'league': league})
         if form.is_valid():
             day = form.cleaned_data['day']
 #            module_id = form.cleaned_data['module']
@@ -373,7 +379,8 @@ def lineup_edit(request, league_id, team_id, day):
                 return redirect('team_details', team_id)
     else:
         form = UploadLineupForm(initial={'players': team_players, 'team': team,
-                                         'modules': modules, 'day': day})
+                                         'modules': modules, 'day': day,
+                                         'league': league})
         for n, player in enumerate(lineup.players.all()[11:], 1):
             form.fields['substitute_%s' % n].initial = player.code
         form.fields['holders'].initial = [p.code for p in
@@ -385,7 +392,7 @@ def lineup_edit(request, league_id, team_id, day):
 
 @login_required
 def matches(request, league_id):
-    league = League.objects.get(id=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     league_matches = league.matches
     days = [d['day'] for d in Match.objects.filter(
         league=league).values('day').distinct()]
@@ -399,7 +406,7 @@ def matches(request, league_id):
 
 @login_required
 def match_details(request, league_id, day):
-    league = League.objects.get(pk=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     if request.GET.get('back_to_calendar'):
         return redirect('matches', league.id)
     league_matches = league.matches.filter(day=int(day))
@@ -458,7 +465,7 @@ def match_details(request, league_id, day):
 
 @login_required
 def chart(request, league_id):
-    league = League.objects.get(id=int(league_id))
+    league = get_object_or_404(League, pk=int(league_id))
     league_teams = league.team_set.all()
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)

@@ -1,5 +1,8 @@
 {% extends "fantalega/base.html" %}
 
 {% block content %}
-  <font color="blue">You have been logged out!</font>
+  <h1><font color="blue">you have been logged out!</font></h1>
+  <br><br>
+  <font color="green"><a href="{% url 'index' %}">Click here to login</a></font>
+
 {% endblock %}
