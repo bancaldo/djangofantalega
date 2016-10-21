@@ -1,0 +1,12 @@
+{% extends "fantalega/base.html" %}
+{% load bootstrap3 %}
+
+{% block title %}Registration Successful{% endblock %}
+{% block head %}
+ Registration Completed Successfully
+{% endblock %}
+{% block content %}
+    Thank you for registering.
+  <br><br>
+  <font color="green"><a href="{% url 'index' %}">Click here to login</a></font>
+{% endblock %}

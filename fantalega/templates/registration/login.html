@@ -19,9 +19,10 @@
 <form method="post" action="{% url 'django.contrib.auth.views.login' %}">
 {% csrf_token %}
 {% bootstrap_form form %}
-
-<input type="submit" value="login" />
-<input type="hidden" name="next" value="{{ next }}" />
+  <input type="submit" class="btn" value="Login" name="login">
+  <input type="hidden" name="next" value="{{ next }}" />
 </form>
+<br><br>
+If you are not a registered user, please <a href="{% url 'registration' %}"> Sign up</a>
 
 {% endblock %}

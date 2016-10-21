@@ -9,7 +9,8 @@ from fantalega.scripts.calendar import create_season
 from datetime import datetime
 from fantalega.scripts.calc import LineupHandler, get_final, lineups_data
 from django.contrib.auth.decorators import login_required
-# from django.contrib.auth.decorators import user_passes_test
+from fantalega.forms import RegistrationForm
+from django.contrib.auth.models import User
 
 
 @login_required
@@ -485,3 +486,26 @@ def chart(request, league_id):
     lineups_values.sort(key=lambda x: (x[1], x[6]), reverse=True)
     context = {'league': league, 'lineups_values': lineups_values}
     return render(request, 'fantalega/chart.html', context)
+
+
+def register_user(request):
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        context = {'form': form}
+        if form.is_valid():
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password1'],
+                email=form.cleaned_data['email'])
+            messages.success(request, "Welcome %s now you can login" %
+                             user.username)
+            return redirect ('/registration/success/')
+        return render(request, 'registration/registration_form.html', context)
+    else:
+        form = RegistrationForm()
+        context = {'form': form}
+    return render(request, 'registration/registration_form.html', context)
+
+
+def register_success(request):
+    return render(request, 'registration/success.html')
