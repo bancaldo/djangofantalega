@@ -509,3 +509,13 @@ def register_user(request):
 
 def register_success(request):
     return render(request, 'registration/success.html')
+
+# send email
+# go to https://www.google.com/settings/security/lesssecureapps
+# click on active
+
+# from django.core.mail import EmailMessage
+#
+# email = EmailMessage('test', 'content', 'bancaldo <bancaldo@gmail.com>',
+#                      ['bancaldo@gmail.com'],)
+# email.send()
