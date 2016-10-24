@@ -23,7 +23,7 @@
     {% else %}
       {% if user.is_staff %}
         <div class="navbar-header">
-          <a class="navbar-brand" href="\admin">
+          <a class="navbar-brand" href="{% url 'admin:index' %}">
               <font color="red">Admin</font></a></div>
       {% endif %}
       <div class="navbar-header">

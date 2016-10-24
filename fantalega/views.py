@@ -16,7 +16,7 @@ import hashlib
 from django.utils import timezone
 from django.template import Context
 from django.template.loader import get_template
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 
 
 @login_required
@@ -519,9 +519,12 @@ def register_user(request):
             context = Context({'user': user.username,
                                'activation_key': activation_key})
             email_body = template.render(context)
-            email = EmailMessage(email_subject, email_body,
+#            email = EmailMessage(email_subject, email_body,
+#                                 'no-reply@gmail.com>', [user.email, ])
+            email = EmailMultiAlternatives(email_subject, email_body,
                                  'no-reply@gmail.com>', [user.email, ])
-            # email.send()  # decomment to send email
+            email.attach_alternative(email_body, 'text/html')
+            email.send()  # decomment to send email
             messages.info(request,
                           "A confirmation mail has been sent to you.\n"
                           "You have 2 days before the link expires")
