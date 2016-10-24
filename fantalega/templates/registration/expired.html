@@ -1,0 +1,11 @@
+{% extends "fantalega/base.html" %}
+{% load bootstrap3 %}
+
+{% block title %}activation key expired{% endblock %}
+
+{% block content %}
+  <br><br>
+  <b>{{ user }}</b> <font color="red">Your activation key has expired</font>
+  <br><br>
+  <a href="{% url 'registration' %}">...try to register again</a>
+{% endblock %}

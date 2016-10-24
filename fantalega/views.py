@@ -1,7 +1,7 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import League, Team, Player, Trade, Match, Evaluation
-from .models import Lineup, LineupsPlayers
+from .models import Lineup, LineupsPlayers, UserProfile
 from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
@@ -11,6 +11,12 @@ from fantalega.scripts.calc import LineupHandler, get_final, lineups_data
 from django.contrib.auth.decorators import login_required
 from fantalega.forms import RegistrationForm
 from django.contrib.auth.models import User
+import random
+import hashlib
+from django.utils import timezone
+from django.template import Context
+from django.template.loader import get_template
+from django.core.mail import EmailMessage
 
 
 @login_required
@@ -497,25 +503,52 @@ def register_user(request):
                 username=form.cleaned_data['username'],
                 password=form.cleaned_data['password1'],
                 email=form.cleaned_data['email'])
-            messages.success(request, "Welcome %s now you can login" %
-                             user.username)
-            return redirect ('reg_success')
-        return render(request, 'registration/registration_form.html', context)
+            user.is_active = False
+            user.save()
+            salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
+            activation_key = hashlib.sha1(salt + user.username).hexdigest()
+            now = datetime.today()
+            key_expires = datetime(now.year, now.month, now.day + 2)
+            profile = UserProfile(user=user, activation_key=activation_key,
+                                  key_expires=key_expires)
+            profile.save()
+            email_subject = 'Your new <bancaldo> fantalega account confirmation'
+            # go to https://www.google.com/settings/security/lesssecureapps
+            # click on active
+            template = get_template('registration/confirm_email.html')
+            context = Context({'user': user.username,
+                               'activation_key': activation_key})
+            email_body = template.render(context)
+            email = EmailMessage(email_subject, email_body,
+                                 'no-reply@gmail.com>', [user.email, ])
+            # email.send()  # decomment to send email
+            messages.info(request,
+                          "A confirmation mail has been sent to you.\n"
+                          "You have 2 days before the link expires")
+            return redirect ('index')
     else:
         form = RegistrationForm()
         context = {'form': form}
     return render(request, 'registration/registration_form.html', context)
 
 
+def activate(request, activation_key):
+    user_profile = get_object_or_404(UserProfile, activation_key=activation_key)
+    if user_profile.user.is_active:
+        return render(request, 'registration/active.html',
+                      {'user': request.user.username})
+    if user_profile.key_expires < timezone.now():
+        return render(request, 'registration/expired.html',
+                      {'user': request.user.username})
+    user_profile.user.is_active = True
+    user_profile.user.save()
+    messages.success(request, "You have confirmed with success!")
+    return redirect('reg_success')
+
+
 def register_success(request):
     return render(request, 'registration/success.html')
 
-# send email
-# go to https://www.google.com/settings/security/lesssecureapps
-# click on active
 
-# from django.core.mail import EmailMessage
-#
-# email = EmailMessage('test', 'content', 'bancaldo <bancaldo@gmail.com>',
-#                      ['bancaldo@gmail.com'],)
-# email.send()
+def activation_link_expired(request):
+    return render(request, 'registration/expired.html')
