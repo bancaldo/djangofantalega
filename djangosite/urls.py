@@ -17,16 +17,10 @@ Including another URLconf
 from django.conf.urls import url, include
 # noinspection PyUnresolvedReferences
 from django.contrib import admin
-from django.contrib.auth import views as auth_views  # auth system
 
 
 urlpatterns = [
     url(r'^fantalega/', include('fantalega.urls')),
-    url(r'^login/$', auth_views.login,
-        {'template_name': 'registration/login.html'},
-        name='django.contrib.auth.views.login'),  # auth system
-    url(r'^logout/$', auth_views.logout,
-        {'template_name': 'registration/logged_out.html'},
-        name='logout'),  # auth system
+    url(r'^auth/', include('log.urls')),
     url(r'^admin/', admin.site.urls),
 ]

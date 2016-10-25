@@ -32,6 +32,7 @@ LOGIN_URL = 'django.contrib.auth.views.login'
 
 INSTALLED_APPS = [
     'fantalega.apps.FantalegaConfig',
+    'log.apps.LogConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

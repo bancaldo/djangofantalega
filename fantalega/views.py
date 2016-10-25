@@ -1,7 +1,7 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import League, Team, Player, Trade, Match, Evaluation
-from .models import Lineup, LineupsPlayers, UserProfile
+from .models import Lineup, LineupsPlayers
 from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
@@ -9,16 +9,6 @@ from fantalega.scripts.calendar import create_season
 from datetime import datetime
 from fantalega.scripts.calc import LineupHandler, get_final, lineups_data
 from django.contrib.auth.decorators import login_required
-from fantalega.forms import RegistrationForm
-from django.contrib.auth.models import User
-import random
-import hashlib
-from django.utils import timezone
-from django.template import Context
-from django.template.loader import get_template
-from django.core.mail import EmailMessage, EmailMultiAlternatives
-from django.http import HttpRequest
-from django.urls import reverse
 
 
 @login_required
@@ -467,7 +457,7 @@ def match_details(request, league_id, day):
                 message = 'Some Lineups are missing: %s' % \
                           ', '.join(missing_lineups)
             messages.error(request, message)
-        return redirect('matches', league.id)
+            return redirect('matches', league.id)
     context = {'league': league, 'matches': league_matches, 'day': day}
     return render(request, 'fantalega/match.html', context)
 
@@ -494,68 +484,3 @@ def chart(request, league_id):
     lineups_values.sort(key=lambda x: (x[1], x[6]), reverse=True)
     context = {'league': league, 'lineups_values': lineups_values}
     return render(request, 'fantalega/chart.html', context)
-
-
-def register_user(request):
-    if request.method == 'POST':
-        form = RegistrationForm(request.POST)
-        context = {'form': form}
-        if form.is_valid():
-            user = User.objects.create_user(
-                username=form.cleaned_data['username'],
-                password=form.cleaned_data['password1'],
-                email=form.cleaned_data['email'])
-            user.is_active = False
-            user.save()
-            salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
-            activation_key = hashlib.sha1(salt + user.username).hexdigest()
-            now = datetime.today()
-            key_expires = datetime(now.year, now.month, now.day + 2)
-            profile = UserProfile(user=user, activation_key=activation_key,
-                                  key_expires=key_expires)
-            profile.save()
-            email_subject = 'Your new <bancaldo> fantalega account confirmation'
-            # go to https://www.google.com/settings/security/lesssecureapps
-            # click on active
-            location = reverse("activate", args=(activation_key,))
-            activation_link = request.build_absolute_uri(location)
-            template = get_template('registration/confirm_email.html')
-            context = Context({'user': user.username,
-                               'activation_link': activation_link})
-            email_body = template.render(context)
-            print email_body  # debug
-            email = EmailMultiAlternatives(email_subject, email_body,
-                                 'no-reply@gmail.com>', [user.email, ])
-            email.attach_alternative(email_body, 'text/html')
-            print email_body
-            # email.send()  # decomment to send email
-            messages.info(request,
-                          "A confirmation mail has been sent to you.\n"
-                          "You have 2 days before the link expires")
-            return redirect ('index')
-    else:
-        form = RegistrationForm()
-        context = {'form': form}
-    return render(request, 'registration/registration_form.html', context)
-
-
-def activate(request, activation_key):
-    user_profile = get_object_or_404(UserProfile, activation_key=activation_key)
-    if user_profile.user.is_active:
-        return render(request, 'registration/active.html',
-                      {'user': request.user.username})
-    if user_profile.key_expires < timezone.now():
-        return render(request, 'registration/expired.html',
-                      {'user': request.user.username})
-    user_profile.user.is_active = True
-    user_profile.user.save()
-    messages.success(request, "You have confirmed with success!")
-    return redirect('reg_success')
-
-
-def register_success(request):
-    return render(request, 'registration/success.html')
-
-
-def activation_link_expired(request):
-    return render(request, 'registration/expired.html')
