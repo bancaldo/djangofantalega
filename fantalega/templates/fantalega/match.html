@@ -5,29 +5,55 @@
 {% block content %}
     <b><font color="green">{{ league.name }}</font>:
         <font color="purple">giornata {{ day }}</font></b><br>
-
-    <table class="table table-striped" width="100%">
-    {% if matches %}
-      {% for match in matches %}
-        <tr>
-        <td><a href="{% url 'team_details' league.id match.home_team.id %}">
-        {{ match.home_team }}</a></td>
-        <td><a href="{% url 'team_details' league.id match.visit_team.id %}">
-        {{ match.visit_team }}</a></td>
-        <td>{{ match.home_team|get_goals:day }}</td>
-        <td>{{ match.visit_team|get_goals:day }}</td>
-        </tr>
-      {% endfor %}
-    </table>
+    <br>
     <form action="#" method="get">
       <input type="submit" class="btn" value="back to calendar"
              name="back_to_calendar">
     </form>
-        {% if user.is_staff %}
-        <form>
-            <input type="submit" class="btn" value="calculate" name="calculate">
-        </form>
-        {% endif %}
+
+    {% if user.is_staff %}
+    <form>
+        <input type="submit" class="btn" value="calculate" name="calculate">
+    </form>
+    {% endif %}
+
+    <div id="container" style="width:70%;">
+
+        <table class="table table-striped" width="100%">
+        {% if matches %}
+          {% for match in matches %}
+            <tr>
+            <td><a href="{% url 'team_details' league.id match.home_team.id %}">
+            {{ match.home_team }}</a></td>
+            <td><a href="{% url 'team_details' league.id match.visit_team.id %}">
+            {{ match.visit_team }}</a></td>
+            <td>{{ match.home_team|get_goals:day }}</td>
+            <td>{{ match.visit_team|get_goals:day }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+    </div>
+
+  <div id="left" style="float:left; width:30%;">
+  {% for match in matches %}
+    <font color="green"><b>{{match.home_team}}</b></font><br>
+    {% for player in dict_evaluated|get_evaluated:match.home_team %}
+      {{player.name}}: {{player|get_fvote:fantaday}}<br>
+    {% endfor %}
+    <b>total: {{match.home_team|get_total:day}}</b><br><br>
+  {% endfor %}
+  </div>
+
+  <div id="right" style="float:left; width:30%;">
+  {% for match in matches %}
+    <font color="green"><b>{{match.visit_team}}</b></font><br>
+    {% for player in dict_evaluated|get_evaluated:match.visit_team %}
+      {{player.name}}: {{player|get_fvote:fantaday}}<br>
+    {% endfor %}
+    <b>total: {{match.visit_team|get_total:day}}</b><br><br>
+  {% endfor %}
+  </div>
+
     {% else %}
       <p>No match found.</p>
     {% endif %}

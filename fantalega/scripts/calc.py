@@ -129,6 +129,7 @@ class LineupHandler(object):
         self.not_evaluated = []
         self.available_by_role = []
         self.added_player = []
+        self.new_list = []
         self.substitutions = 0
         self.candidate = None
         self.available = [p for p in self.substitutes if
@@ -213,12 +214,12 @@ class LineupHandler(object):
                 self.added_player.append(self.candidate)
                 self.substitutions += 1
 
-        new_list = [p for p in self.holders if Evaluation.objects.filter(
+        self.new_list = [p for p in self.holders if Evaluation.objects.filter(
             player=p, day=self.day).first().fanta_value > 0.0] +\
             self.added_player
-        total = sum([self.get_evaluation(p) for p in new_list])
-        defenders = [p for p in new_list if p.role == 'defender']
-        goalkeeper = [p for p in new_list if p.role == 'goalkeeper']
+        total = sum([self.get_evaluation(p) for p in self.new_list])
+        defenders = [p for p in self.new_list if p.role == 'defender']
+        goalkeeper = [p for p in self.new_list if p.role == 'goalkeeper']
         if len(defenders) >= 4 and goalkeeper:
             mod = defense_modifier(goalkeeper + defenders, self.day)
             total += mod

@@ -51,6 +51,12 @@ def has_pts(league, day):
     return len(calculated_lineups) == len(league.team_set.all())
 
 
+@register.filter(name='get_total')
+def get_total(team, day):
+    lineup = team.team_lineups.filter(day=int(day)).first()
+    return lineup.pts
+
+
 @register.filter(name='get_goals')
 def get_goals(team, day):
     lineup = team.team_lineups.filter(day=int(day)).first()
@@ -58,6 +64,11 @@ def get_goals(team, day):
         return lineup.goals_made
     else:
         return "ND"
+
+
+@register.filter(name='get_evaluated')
+def get_evaluated(dict_evaluated, key):
+    return dict_evaluated.get(key)
 
 
 @register.filter(name='pts_filter')
@@ -83,3 +94,5 @@ def get_matches(matches, day):
 @register.assignment_tag
 def get_bootstrap_alert_msg_css_name(tags):
     return 'danger' if tags == 'error' else tags
+
+

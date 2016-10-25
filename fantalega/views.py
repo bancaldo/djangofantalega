@@ -405,7 +405,9 @@ def matches(request, league_id):
 
 @login_required
 def match_details(request, league_id, day):
+    dict_evaluated = {}
     league = get_object_or_404(League, pk=int(league_id))
+    fantaday = int(day) + league.offset
     if request.GET.get('back_to_calendar'):
         return redirect('matches', league.id)
     league_matches = league.matches.filter(day=int(day))
@@ -436,6 +438,14 @@ def match_details(request, league_id, day):
                 home_lineup.save()
                 visit_lineup.pts = visit_pts
                 visit_lineup.save()
+                if not h_home.new_list:
+                    dict_evaluated[match.home_team] = h_home.holders
+                else:
+                    dict_evaluated[match.home_team] = h_home.new_list
+                if not h_visit.new_list:
+                    dict_evaluated[match.visit_team] = h_visit.holders
+                else:
+                    dict_evaluated[match.visit_team] = h_visit.new_list
                 for lineup, prefix in [(home_lineup, 'h'), (visit_lineup, 'v')]:
                     lineup.won = data.get("%sw" % prefix)
                     lineup.matched = data.get("%sm" % prefix)
@@ -458,7 +468,8 @@ def match_details(request, league_id, day):
                           ', '.join(missing_lineups)
             messages.error(request, message)
             return redirect('matches', league.id)
-    context = {'league': league, 'matches': league_matches, 'day': day}
+    context = {'league': league, 'matches': league_matches, 'day': day,
+               'dict_evaluated': dict_evaluated, 'fantaday': fantaday}
     return render(request, 'fantalega/match.html', context)
 
 
