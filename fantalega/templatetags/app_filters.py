@@ -54,7 +54,7 @@ def has_pts(league, day):
 @register.filter(name='get_total')
 def get_total(team, day):
     lineup = team.team_lineups.filter(day=int(day)).first()
-    return lineup.pts
+    return lineup.pts if lineup else '0.0: Lineup missing'
 
 
 @register.filter(name='get_goals')
