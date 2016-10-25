@@ -119,8 +119,8 @@ STATIC_URL = '/static/'
 
 # Gmail email settings
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'xxxx@gmail.com'
-EMAIL_HOST_PASSWORD = 'xxxxx'
+EMAIL_HOST_USER = 'xxxxxx@gmail.com'
+EMAIL_HOST_PASSWORD = 'xxxxxxxx'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
