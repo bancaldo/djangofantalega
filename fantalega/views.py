@@ -17,6 +17,8 @@ from django.utils import timezone
 from django.template import Context
 from django.template.loader import get_template
 from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.http import HttpRequest
+from django.urls import reverse
 
 
 @login_required
@@ -515,16 +517,18 @@ def register_user(request):
             email_subject = 'Your new <bancaldo> fantalega account confirmation'
             # go to https://www.google.com/settings/security/lesssecureapps
             # click on active
+            location = reverse("activate", args=(activation_key,))
+            activation_link = request.build_absolute_uri(location)
             template = get_template('registration/confirm_email.html')
             context = Context({'user': user.username,
-                               'activation_key': activation_key})
+                               'activation_link': activation_link})
             email_body = template.render(context)
-#            email = EmailMessage(email_subject, email_body,
-#                                 'no-reply@gmail.com>', [user.email, ])
+            print email_body  # debug
             email = EmailMultiAlternatives(email_subject, email_body,
                                  'no-reply@gmail.com>', [user.email, ])
             email.attach_alternative(email_body, 'text/html')
-            email.send()  # decomment to send email
+            print email_body
+            # email.send()  # decomment to send email
             messages.info(request,
                           "A confirmation mail has been sent to you.\n"
                           "You have 2 days before the link expires")
