@@ -1,4 +1,5 @@
 {% extends 'fantalega/base.html' %}
+{% load app_filters %}
 
 {% block content %}
 		<h1><font color="green">{{ player.name }}</font></h1>
@@ -40,4 +41,10 @@
     	  </tr>
 	   {% endfor %}
 	</table>
+    <br>
+    <b><font color="orange">presenze</font></b>: {{player|get_played:player.code}}
+    <br>
+    <b><font color="orange">fv avg</font></b>: {{player|get_avg:player.code}}
+
+
 {% endblock %}

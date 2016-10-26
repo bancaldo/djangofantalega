@@ -1,7 +1,7 @@
 # noinspection PyUnresolvedReferences
 from django import template
 from django.utils.safestring import mark_safe
-from fantalega.models import Lineup, Player
+from fantalega.models import Lineup, Player, Evaluation
 
 
 register = template.Library()
@@ -107,6 +107,23 @@ def is_defender(player):
         return mark_safe('<font color="#cc66ff">%s</font>' % player)
     else:
         return player
+
+
+@register.filter(name='get_played')
+def get_played(player, code):
+    obj_player = Player.objects.filter(name=player, code=code).first()
+    played = [e for e in Evaluation.objects.filter(player=obj_player).all()
+              if e.fanta_value > 0.0 ]
+    return len(played)
+
+
+@register.filter(name='get_avg')
+def get_avg(player, code):
+    obj_player = Player.objects.filter(name=player, code=code).first()
+    fanta_values = [e.fanta_value for e
+                    in Evaluation.objects.filter(player=obj_player).all()
+                    if e.fanta_value > 0.0 ]
+    return sum(fanta_values)/len(fanta_values)
 
 
 @register.assignment_tag

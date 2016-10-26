@@ -258,6 +258,7 @@ def upload_votes(request, league_id):
 def lineup_details(request, league_id, team_id, day):
     league = get_object_or_404(League, pk=int(league_id))
     total = 0.0
+    mod = 0.0
     team = get_object_or_404(Team, pk=int(team_id))
     offset = team.leagues.all()[0].offset
     fantaday = int(day) + int(offset)
@@ -272,8 +273,9 @@ def lineup_details(request, league_id, team_id, day):
         return redirect('lineup_edit', league.id, team.id, day)
     if request.GET.get('calculate'):
         try:
-            handler = LineupHandler(lineup, int(day), int(offset))
+            handler = LineupHandler(lineup, int(day), league)
             total = handler.get_pts()
+            mod = handler.mod
         except AttributeError:
             messages.error(request, 'No pts available: '
                                     'lineups or evaluations are missing, '
@@ -281,7 +283,7 @@ def lineup_details(request, league_id, team_id, day):
             total = ''
 
     context = {'team': team, 'holders': holders, 'substitutes': substitutes,
-               'lineup': lineup, 'day': day, 'd_votes': d_votes,
+               'lineup': lineup, 'day': day, 'd_votes': d_votes, 'mod': mod,
                'fantaday': fantaday, 'total': total, 'league': league}
     return render(request, 'fantalega/lineup.html', context)
 
