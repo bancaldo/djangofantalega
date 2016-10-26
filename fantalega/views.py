@@ -415,9 +415,9 @@ def match_details(request, league_id, day):
     if request.GET.get('calculate'):
         for match in league_matches:
             home_lineup = match.home_team.team_lineups.filter(
-                day=int(day)).first()
+                day=int(day), league=league).first()
             visit_lineup = match.visit_team.team_lineups.filter(
-                day=int(day)).first()
+                day=int(day), league=league).first()
             offset_day = int(day) + league.offset
             if Evaluation.objects.filter(day=offset_day).count() == 0:
                 messages.error(request,
@@ -426,10 +426,8 @@ def match_details(request, league_id, day):
                 return redirect('matches', league.id)
 
             if home_lineup and visit_lineup:
-                h_home = LineupHandler(home_lineup, int(day),
-                                       int(league.offset))
-                h_visit = LineupHandler(visit_lineup, int(day),
-                                        int(league.offset))
+                h_home = LineupHandler(home_lineup, int(day), league)
+                h_visit = LineupHandler(visit_lineup, int(day), league)
                 home_pts = h_home.get_pts() + 2
                 visit_pts = h_visit.get_pts()
                 home_goals, visit_goals = get_final(home_pts, visit_pts)
@@ -438,14 +436,18 @@ def match_details(request, league_id, day):
                 home_lineup.save()
                 visit_lineup.pts = visit_pts
                 visit_lineup.save()
-                if not h_home.new_list:
-                    dict_evaluated[match.home_team] = h_home.holders
+                if not h_home.new_list:  # if all holders are evaluated
+                    dict_evaluated[match.home_team] = (h_home.holders,
+                                                       h_home.mod)
                 else:
-                    dict_evaluated[match.home_team] = h_home.new_list
+                    dict_evaluated[match.home_team] = (h_home.new_list,
+                                                       h_home.mod)
                 if not h_visit.new_list:
-                    dict_evaluated[match.visit_team] = h_visit.holders
+                    dict_evaluated[match.visit_team] = (h_visit.holders,
+                                                        h_visit.mod)
                 else:
-                    dict_evaluated[match.visit_team] = h_visit.new_list
+                    dict_evaluated[match.visit_team] = (h_visit.new_list,
+                                                        h_visit.mod)
                 for lineup, prefix in [(home_lineup, 'h'), (visit_lineup, 'v')]:
                     lineup.won = data.get("%sw" % prefix)
                     lineup.matched = data.get("%sm" % prefix)

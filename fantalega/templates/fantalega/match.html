@@ -38,9 +38,11 @@
   {% for match in matches %}
     <font color="green"><b>{{match.home_team}}</b></font><br>
     {% for player in dict_evaluated|get_evaluated:match.home_team %}
-      {{player.name}}: {{player|get_fvote:fantaday}}<br>
+      {{player.name|is_defender}}: {{player|get_fvote:fantaday}}<br>
     {% endfor %}
+    <b>mod:{{dict_evaluated|get_defense_mod:match.home_team}}</b><br>
     <b>total: {{match.home_team|get_total:day}}</b><br><br>
+
   {% endfor %}
   </div>
 
@@ -48,8 +50,9 @@
   {% for match in matches %}
     <font color="green"><b>{{match.visit_team}}</b></font><br>
     {% for player in dict_evaluated|get_evaluated:match.visit_team %}
-      {{player.name}}: {{player|get_fvote:fantaday}}<br>
+      {{player.name|is_defender}}: {{player|get_fvote:fantaday}}<br>
     {% endfor %}
+    <b>mod:{{dict_evaluated|get_defense_mod:match.visit_team}}</b><br>
     <b>total: {{match.visit_team|get_total:day}}</b><br><br>
   {% endfor %}
   </div>

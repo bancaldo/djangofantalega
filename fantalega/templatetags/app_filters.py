@@ -1,7 +1,7 @@
 # noinspection PyUnresolvedReferences
 from django import template
 from django.utils.safestring import mark_safe
-from fantalega.models import Lineup
+from fantalega.models import Lineup, Player
 
 
 register = template.Library()
@@ -68,7 +68,21 @@ def get_goals(team, day):
 
 @register.filter(name='get_evaluated')
 def get_evaluated(dict_evaluated, key):
-    return dict_evaluated.get(key)
+    data = dict_evaluated.get(key)
+    if data:
+        return data[0]
+    else:
+        return []
+#    return dict_evaluated.get(key)
+
+
+@register.filter(name='get_defense_mod')
+def get_defense_mod(dict_evaluated, key):
+    data = dict_evaluated.get(key)
+    if data:
+        return data[1]
+    else:
+        return 0.0
 
 
 @register.filter(name='pts_filter')
@@ -84,6 +98,15 @@ def pts_filter(value):
         return mark_safe(new_string)
     else:
         return value
+
+
+@register.filter(name='is_defender')
+def is_defender(player):
+    obj_player = Player.objects.filter(name=player).first()
+    if 200 < obj_player.code < 500:
+        return mark_safe('<font color="#cc66ff">%s</font>' % player)
+    else:
+        return player
 
 
 @register.assignment_tag

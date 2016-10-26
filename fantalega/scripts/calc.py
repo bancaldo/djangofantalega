@@ -5,34 +5,6 @@ class BadInputError(Exception):
     pass
 
 
-def defense_modifier(iterable, day):
-    gk = iterable[0]
-    vgk = Evaluation.objects.filter(player=gk, day=day).first().net_value
-    def_votes = [Evaluation.objects.filter(
-        player=d, day=day).first().net_value for d in iterable[1:]]
-    if vgk == 0.0:
-        vgk = 6.0
-    for v in def_votes:
-        if v == 0.0:
-            def_votes[def_votes.index(v)] = 6.0
-    values = sorted(def_votes, reverse=True)[:3] + [vgk]
-    avg_def = sum(values)/4.0
-    if avg_def == 6:
-        return 1
-    elif 6 < avg_def <= 6.25:
-        return 2
-    elif 6.25 < avg_def <= 6.5:
-        return 3
-    elif 6.5 < avg_def <= 6.75:
-        return 4
-    elif 6.75 < avg_def <= 7:
-        return 5
-    elif avg_def > 7:
-        return 6
-    else:
-        return 0
-
-
 def convert_pts_to_goals(pts):
     """
     convert_pts_to_goals(pts) -> int
@@ -121,8 +93,10 @@ def lineups_data(goals_a, goals_b):
 
 
 class LineupHandler(object):
-    def __init__(self, lineup, day, offset):
-        self.day = day + offset
+    def __init__(self, lineup, day, league):
+        self.league = league
+        self.day = day + league.offset
+        self.mod = 0.0
         self.lineup = lineup
         self.holders = [p for p in self.lineup.players.all()[:11]]
         self.substitutes = [p for p in self.lineup.players.all()[11:]]
@@ -133,14 +107,16 @@ class LineupHandler(object):
         self.substitutions = 0
         self.candidate = None
         self.available = [p for p in self.substitutes if
-                          Evaluation.objects.filter(player=p, day=self.day
+                          Evaluation.objects.filter(player=p, day=self.day,
+                                                    league=league
                                                     ).first().fanta_value > 0.0
                           and p.role != 'goalkeeper']
 
     def get_goalkeeper_substitute(self):
         gks = [p for p in self.substitutes if Evaluation.objects.filter(
-               player=p, day=self.day).first().fanta_value > 0.0 and
-               p.role == 'goalkeeper']
+               player=p, day=self.day, league=self.league
+               ).first().fanta_value > 0.0
+               and p.role == 'goalkeeper']
         if gks:
             return gks[0]
         else:
@@ -148,6 +124,7 @@ class LineupHandler(object):
 
     def get_evaluation(self, player):
         evaluation = Evaluation.objects.filter(player=player,
+                                               league=self.league,
                                                day=self.day).first()
         return evaluation.fanta_value
 
@@ -158,7 +135,7 @@ class LineupHandler(object):
     def get_same_role_substitute(self, player):
         self.available_by_role = [p for p in self.substitutes
                                   if p.role == player.role and
-                                  Evaluation.objects.filter(
+                                  Evaluation.objects.filter(league=self.league,
                                       player=p, day=self.day
                                   ).first().fanta_value > 0.0]
         self.candidate = self.available_by_role[0]
@@ -175,14 +152,14 @@ class LineupHandler(object):
     def is_same_role_available(self, player):
         self.available_by_role = [p for p in self.substitutes if
                                   p.role == player.role and
-                                  Evaluation.objects.filter(
+                                  Evaluation.objects.filter(league=self.league,
                                       player=p, day=self.day
                                   ).first().fanta_value > 0.0]
         return len(self.available_by_role) > 0
 
     def is_substitute_available(self):
         self.available = [p for p in self.substitutes if
-                          Evaluation.objects.filter(
+                          Evaluation.objects.filter(league=self.league,
                               player=p, day=self.day
                           ).first().fanta_value > 0.0 and
                           p.role != 'goalkeeper']
@@ -190,11 +167,12 @@ class LineupHandler(object):
 
     def get_pts(self):
         if not self.need_substitutions():
-            return sum([self.get_evaluation(p) for p in self.holders])
+            return self.def_mod(self.holders)
         else:
             self.not_evaluated = \
                 [p for p in self.holders if Evaluation.objects.filter(
-                    player=p, day=self.day).first().fanta_value == 0.0]
+                    player=p, day=self.day, league=self.league
+                ).first().fanta_value == 0.0]
         for player in self.not_evaluated:
             if self.is_same_role_available(player):
                 self.candidate = self.get_same_role_substitute(player)
@@ -215,15 +193,10 @@ class LineupHandler(object):
                 self.substitutions += 1
 
         self.new_list = [p for p in self.holders if Evaluation.objects.filter(
-            player=p, day=self.day).first().fanta_value > 0.0] +\
+            player=p, day=self.day, league=self.league
+            ).first().fanta_value > 0.0] +\
             self.added_player
-        total = sum([self.get_evaluation(p) for p in self.new_list])
-        defenders = [p for p in self.new_list if p.role == 'defender']
-        goalkeeper = [p for p in self.new_list if p.role == 'goalkeeper']
-        if len(defenders) >= 4 and goalkeeper:
-            mod = defense_modifier(goalkeeper + defenders, self.day)
-            total += mod
-        return total
+        return self.def_mod(self.new_list)
 
     def is_module_accepted(self, player):
         d, m, f = 0, 0, 0
@@ -242,3 +215,39 @@ class LineupHandler(object):
         module = '%s%s%s' % (d, m, f)
         print "\n[INFO] module changes in %s" % module
         return module in ('343', '352', '442', '433', '451', '532', '541')
+
+    def def_mod(self, player_list):
+        total = sum([Evaluation.objects.filter(
+            player=p, day=self.day, league=self.league).first().fanta_value
+                     for p in player_list])
+        defenders = [p for p in player_list if p.role == 'defender']
+        goalkeepers = [p for p in player_list if p.role == 'goalkeeper']
+        gk = goalkeepers[0] if goalkeepers else None
+        vgk = Evaluation.objects.filter(player=gk, day=self.day,
+                                        league=self.league
+                                        ).first().net_value
+        def_votes = [Evaluation.objects.filter(league=self.league,
+            player=d, day=self.day).first().net_value for d in defenders]
+        if len(defenders) >= 4 and gk:
+            if vgk == 0.0:
+                vgk = 6.0
+            for v in def_votes:
+                if v == 0.0:
+                    def_votes[def_votes.index(v)] = 6.0
+            values = sorted(def_votes, reverse=True)[:3] + [vgk]
+            avg_def = sum(values)/4.0
+            if avg_def == 6:
+                self.mod = 1
+            elif 6 < avg_def <= 6.25:
+                self.mod = 2
+            elif 6.25 < avg_def <= 6.5:
+                self.mod = 3
+            elif 6.5 < avg_def <= 6.75:
+                self.mod = 4
+            elif 6.75 < avg_def <= 7:
+                self.mod = 5
+            elif avg_def > 7:
+                self.mod = 6
+            return total + self.mod
+        else:
+            return total
