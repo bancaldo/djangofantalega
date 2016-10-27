@@ -1,4 +1,4 @@
-from fantalega.forms import RegistrationForm
+from log.forms import RegistrationForm
 from django.contrib.auth.models import User
 import random
 import hashlib

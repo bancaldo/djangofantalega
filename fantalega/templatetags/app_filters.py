@@ -109,12 +109,66 @@ def is_defender(player):
         return player
 
 
+@register.filter(name='color_by_role')
+def color_by_role(player):
+    if player.role.lower() == 'goalkeeper':
+        color = 'blue'
+    elif player.role.lower() == 'defender':
+        color = 'orange'
+    elif player.role.lower() == 'midfielder':
+        color = 'green'
+    else:
+        color = 'purple'
+    new_string = '<font color="%s">%s</font>' % (color, player.name.lower())
+    return mark_safe(new_string)
+
+
 @register.filter(name='get_played')
 def get_played(player, code):
     obj_player = Player.objects.filter(name=player, code=code).first()
     played = [e for e in Evaluation.objects.filter(player=obj_player).all()
               if e.fanta_value > 0.0 ]
     return len(played)
+
+
+@register.filter(name='total_to_buy')
+def get_played(team, league):
+    player_bought = team.player_set.count()
+    remain = league.max_players() - player_bought
+    color = "green" if not remain else "red"
+    return mark_safe('<b><font color="%s">%s</font></b>' % (color, remain))
+
+
+@register.filter(name='gk_to_buy')
+def gk_to_buy(team, league):
+    gk_bought = team.player_set.filter(role='goalkeeper').count()
+    remain = league.max_goalkeepers - gk_bought
+    color = "green" if not remain else "red"
+    return mark_safe('<b><font color="%s">%s</font></b>' % (color, remain))
+
+
+@register.filter(name='def_to_buy')
+def def_to_buy(team, league):
+    def_bought = team.player_set.filter(role='defender').count()
+    remain = league.max_defenders - def_bought
+    color = "green" if not remain else "red"
+    return mark_safe('<b><font color="%s">%s</font></b>' % (color, remain))
+
+
+@register.filter(name='mid_to_buy')
+def mid_to_buy(team, league):
+    mid_bought = team.player_set.filter(role='midfielder').count()
+    remain = league.max_midfielders - mid_bought
+    color = "green" if not remain else "red"
+    return mark_safe('<b><font color="%s">%s</font></b>' % (color, remain))
+
+
+@register.filter(name='forw_to_buy')
+def forw_to_buy(team, league):
+    forw_bought = team.player_set.filter(role='forward').count()
+    remain = league.max_forwards - forw_bought
+    color = "green" if not remain else "red"
+    return mark_safe('<b><font color="%s">%s</font></b>' % (color, remain))
 
 
 @register.filter(name='get_avg')

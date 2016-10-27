@@ -1,0 +1,35 @@
+{% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
+{% load app_filters %}
+
+{% block content %}
+    <b><font color="green">{{ league.name }}</font>:
+        <font color="purple">Auction summary</font></b><br>
+    <br>
+    <form action="#" method="get">
+      <input type="submit" class="btn" value="back to auction"
+             name="back_to_auction">
+    </form>
+
+  {% if league.team_set.all %}
+      {% for team in league.team_set.all %}
+        <font color="brown"><b>{{team.name}}</b></font>
+        <font color="darkgrey"> {{team.user.username}}</font><br>
+        {% for player in team.player_set.all %}
+          {{player|color_by_role}}:
+          <font color="darkgrey"> {{player.role}}</font><br>
+        {% endfor %}
+        <font color="red">budget remain: <b>{{team.budget}}</b><br></font>
+        total goalkeepers to buy: {{team|gk_to_buy:league}}<br>
+        total defenders to buy: {{team|def_to_buy:league}}<br>
+        total players to buy: {{team|mid_to_buy:league}}<br>
+        total players to buy: {{team|forw_to_buy:league}}<br>
+        total players to buy: {{team|total_to_buy:league}}
+      <br>
+      <br>
+      {% endfor %}
+
+  {% else %}
+    <p>No team found.</p>
+  {% endif %}
+{% endblock %}

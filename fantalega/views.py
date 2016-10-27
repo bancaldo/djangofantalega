@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import League, Team, Player, Trade, Match, Evaluation
 from .models import Lineup, LineupsPlayers
 from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
+from .forms import TeamSellPlayersForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
 from fantalega.scripts.calendar import create_season
@@ -58,6 +59,8 @@ def team_details(request, league_id, team_id):
         return redirect('upload_lineup', league.id, team.id)
     if request.GET.get('new trade'):
         return redirect('trade', league.id, team.id)
+    if request.GET.get('sale'):
+        return redirect('sale', league.id, team.id)
     return render(request, 'fantalega/team.html', context)
 
 
@@ -81,6 +84,8 @@ def auction(request, league_id):
     league = get_object_or_404(League, pk=int(league_id))
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
+    if request.GET.get('auction_summary'):
+        return redirect('auction_summary', league.id)
     free_players = [(p.code, p.name) for p in
                     Player.objects.filter(season=league.season).all()
                     if not p.team]
@@ -95,10 +100,15 @@ def auction(request, league_id):
             auction_value = form.cleaned_data['auction_value']
             team_id = form.cleaned_data['team']
             team = Team.objects.get(pk=int(team_id))
+            if team.player_set.count() == league.max_players():
+                messages.warning(request,
+                                 '%s has reached max player number'
+                                 ' the operation is not valid' % team.name)
+                return redirect('auction', league.id)
             remaining_players = league.max_players() - team.player_set.count()
-            budget_remaining = int(team.budget) - int(auction_value) - \
-                remaining_players
-            if budget_remaining > 0:
+            budget_remaining = int(team.budget) - int(auction_value)
+            if budget_remaining >= 0 and \
+                            budget_remaining >= (remaining_players - 1):
                 player.team = team
                 player.auction_value = auction_value
                 player.save()
@@ -119,6 +129,16 @@ def auction(request, league_id):
     return render(request, 'fantalega/auction.html',
                   {'form': form, 'players': free_players,
                    'teams': league_teams, 'league': league}, )
+
+
+@login_required
+def auction_summary(request, league_id):
+    league = get_object_or_404(League, pk=int(league_id))
+    league_teams = league.team_set.all()
+    if request.GET.get('back_to_auction'):
+        return redirect('auction', league.id)
+    context = {'league': league, 'teams': league_teams}
+    return render(request, 'fantalega/auction_summary.html', context)
 
 
 @login_required
@@ -377,7 +397,7 @@ def lineup_edit(request, league_id, team_id, day):
                           % (team.name, day, player.name, pos)
 
                 messages.success(request, 'Lineup upgraded!')
-                return redirect('team_details', team_id)
+                return redirect('team_details', team_id, league_id)
     else:
         form = UploadLineupForm(initial={'players': team_players, 'team': team,
                                          'modules': modules, 'day': day,
@@ -475,6 +495,37 @@ def match_details(request, league_id, day):
     context = {'league': league, 'matches': league_matches, 'day': day,
                'dict_evaluated': dict_evaluated, 'fantaday': fantaday}
     return render(request, 'fantalega/match.html', context)
+
+
+@login_required
+def sale(request, league_id, team_id):
+    league = get_object_or_404(League, pk=int(league_id))
+    team = get_object_or_404(Team, pk=int(team_id))
+    team_players = [(p.code, "%s [%s]" % (p.name, p.role))
+                    for p in team.player_set.all()]
+    form = TeamSellPlayersForm(request.POST,
+                               initial={'team_players': team_players,
+                                        'team': team, 'league': league})
+    if request.GET.get('back_to_team_details'):
+        return redirect('team_details', league.id, team.id)
+    if request.method == "POST":
+        if form.is_valid():
+            players_to_sell = [Player.get_by_code(int(code),
+                                                  season=league.season)
+                               for code in form.cleaned_data['team_players']]
+
+            gain = 0
+            for player in players_to_sell:
+                team.player_set.remove(player)
+                gain += player.cost
+                team.budget += player.cost
+                team.save()
+            messages.success(request, "Players sold correctly! You gain: %s" %
+                             gain)
+            return redirect('team_details', league.id, team.id)
+    return render(request, 'fantalega/sell.html',
+                  {'form': form, 'team_players': team_players, 'team': team,
+                   'league': league})
 
 
 @login_required

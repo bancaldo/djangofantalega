@@ -16,8 +16,12 @@ urlpatterns = [
     url(r'^players/$', views.players, name='players'),
     url(r'^players/(?P<player_id>[0-9]+)/$', views.player_details,
         name='player_details'),
+    # auction urls
     url(r'^leagues/(?P<league_id>[0-9]+)/auction$', views.auction,
         name='auction'),
+    url(r'^leagues/(?P<league_id>[0-9]+)/auction/summary$',
+        views.auction_summary, name='auction_summary'),
+    # trade urls
     url(r'^leagues/(?P<league_id>[0-9]+)/trades/$',
         views.trades, name='trades'),
     url(r'^leagues/(?P<league_id>[0-9]+)/teams/(?P<team_id>[0-9]+)/trade$',
@@ -34,6 +38,8 @@ urlpatterns = [
     url(r'^leagues/(?P<league_id>[0-9]+)/teams/(?P<team_id>[0-9]+)'
         r'/lineup/(?P<day>[0-9]+)/$',
         views.lineup_details, name='lineup_details'),
+    url(r'^leagues/(?P<league_id>[0-9]+)/teams/'
+        r'(?P<team_id>[0-9]+)/player_sale$', views.sale, name='sale'),
     url(r'^leagues/(?P<league_id>[0-9]+)/matches$', views.matches,
         name='matches'),
     url(r'^leagues/(?P<league_id>[0-9]+)/teams/(?P<team_id>[0-9]+)'
