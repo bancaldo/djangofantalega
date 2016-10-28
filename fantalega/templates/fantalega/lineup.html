@@ -45,7 +45,11 @@
                     {{ mod }}
                 <br>
                 <br>
-                <a href="{% url 'team_details' league.id team.id %}"><b>< back</b></a>
+                <form action="#" method="get">
+                <input type="submit" class="btn"
+                       value="back to {{ team.name }} team"
+                       name="back_to_team_details">
+                </form>
             </div>
             <div id="right" style="float:right; width:30%;">
                 <b><font color="orange">substitutes:</font></b><br>

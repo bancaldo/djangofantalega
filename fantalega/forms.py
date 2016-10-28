@@ -1,9 +1,8 @@
 # noinspection PyUnresolvedReferences
 from django import forms
-from .models import Player
+from .models import Player, Season
 # noinspection PyUnresolvedReferences
 from django.utils.safestring import mark_safe
-from django.contrib.auth.models import User
 
 
 class AuctionPlayer(forms.Form):
@@ -34,7 +33,7 @@ class TradeForm(forms.Form):
 
 class UploadVotesForm(forms.Form):
     day = forms.IntegerField()
-    seasons = enumerate(['%s-%s' % (n, n + 1) for n in range(2016, 2030)],)
+    seasons = enumerate([season.name for season in Season.objects.all()])
     season = forms.ChoiceField(label=u'season', choices=seasons,
                                widget=forms.Select(),)
     file_in = forms.FileField()

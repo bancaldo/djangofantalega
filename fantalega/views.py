@@ -1,15 +1,15 @@
 # noinspection PyUnresolvedReferences
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import League, Team, Player, Trade, Match, Evaluation
+from .models import Season, League, Team, Player, Trade, Match, Evaluation
 from .models import Lineup, LineupsPlayers
 from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
 from .forms import TeamSellPlayersForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
 from fantalega.scripts.calendar import create_season
-from datetime import datetime
 from fantalega.scripts.calc import LineupHandler, get_final, lineups_data
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 
 @login_required
@@ -28,7 +28,8 @@ def league_details(request, league_id):
     league = get_object_or_404(League, pk=int(league_id))
     league_teams = league.team_set.all()
     days = [d['day'] for d in
-            Evaluation.objects.order_by('day').values('day').distinct()]
+            Evaluation.objects.filter(
+                season=league.season).order_by('day').values('day').distinct()]
     if request.GET.get('auction'):
         return redirect('auction', league.id)
     if request.GET.get('calendar'):
@@ -107,8 +108,8 @@ def auction(request, league_id):
                 return redirect('auction', league.id)
             remaining_players = league.max_players() - team.player_set.count()
             budget_remaining = int(team.budget) - int(auction_value)
-            if budget_remaining >= 0 and \
-                            budget_remaining >= (remaining_players - 1):
+            if budget_remaining >= 0 and budget_remaining >= \
+                    (remaining_players - 1):
                 player.team = team
                 player.auction_value = auction_value
                 player.save()
@@ -247,7 +248,7 @@ def vote(request, league_id, day):
     league = get_object_or_404(League, pk=int(league_id))
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
-    votes = Evaluation.objects.filter(league=league, day=day).all()
+    votes = Evaluation.objects.filter(season=league.season, day=day).all()
     context = {'votes': votes, 'day': day, 'league': league}
     return render(request, 'fantalega/vote.html', context)
 
@@ -263,9 +264,9 @@ def upload_votes(request, league_id):
             day = form.cleaned_data['day']
             dict_season = dict(form.fields['season'].choices)
             season = dict_season[int(form.cleaned_data['season'])]
+            obj_season = get_object_or_404(Season, name=season)
             file_in = request.FILES['file_in']
-            Evaluation.upload(path=file_in, day=day, league=league,
-                              season=season)
+            Evaluation.upload(path=file_in, day=day, season=obj_season)
             messages.success(request, 'votes uploaded!')
             return redirect('league_details', league.id)
     else:
@@ -280,6 +281,8 @@ def lineup_details(request, league_id, team_id, day):
     total = 0.0
     mod = 0.0
     team = get_object_or_404(Team, pk=int(team_id))
+    if request.GET.get('back_to_team_details'):
+        return redirect('team_details', league.id, team.id)
     offset = team.leagues.all()[0].offset
     fantaday = int(day) + int(offset)
     lineup = team.team_lineups.filter(day=int(day)).first()
@@ -288,7 +291,8 @@ def lineup_details(request, league_id, team_id, day):
     substitutes = [s_p.player for s_p in lineup_players[11:]]
     d_votes = {code: (fv, v) for code, fv, v in
                [Evaluation.get_evaluations(day=(int(day) + offset),
-                                           code=p.code) for p in holders]}
+                                           code=p.code, season=league.season)
+                for p in holders]}
     if request.GET.get('modify lineup'):
         return redirect('lineup_edit', league.id, team.id, day)
     if request.GET.get('calculate'):
@@ -325,6 +329,12 @@ def upload_lineup(request, league_id, team_id, day=None):
                                          'league': league})
         if form.is_valid():
             day = form.cleaned_data['day']
+            lineup = Lineup.objects.filter(team=team, day=day,
+                                           league=league).first()
+            if lineup:
+                messages.error(request, 'Lineup already exists!')
+                return redirect('team_details', league_id, team_id)
+
             holders = [Player.get_by_code(int(code), season=league.season)
                        for code in form.cleaned_data['holders']]
             substitutes = [Player.get_by_code(int(code), season=league.season)
@@ -334,16 +344,21 @@ def upload_lineup(request, league_id, team_id, day=None):
             if error:
                 messages.error(request, error)
             else:
-                messages.success(request, "Lineup correct!")
-                lineup = Lineup.objects.filter(
-                    team=team, day=day, league=league).first()
-                if not lineup:
-                    lineup = Lineup.objects.create(team=team, day=day,
-                                                   league=league,
-                                                   timestamp=datetime.now())
-                    for pos, player in enumerate((holders + substitutes), 1):
-                        LineupsPlayers.objects.create(
-                            position=pos, lineup=lineup, player=player)
+                dead_line = Match.objects.filter(
+                    league=league, day=day).first().dead_line
+                now = timezone.now()
+                if now > dead_line:
+                    messages.error(request, "You are out of time!")
+                    messages.info(request, "Getting the previous Lineup")
+                    lineup = Lineup.objects.filter(
+                        team=team, day=(day - 1), league=league).first()
+                    holders = [p for p in lineup.players.all()[:11]]
+                    substitutes = [p for p in lineup.players.all()[11:]]
+                lineup = Lineup.objects.create(team=team, day=day,
+                                               league=league, timestamp=now)
+                for pos, player in enumerate((holders + substitutes), 1):
+                    LineupsPlayers.objects.create(position=pos, lineup=lineup,
+                                                  player=player)
                 messages.success(request, 'Lineup uploaded!')
                 return redirect('team_details', league_id, team_id)
     else:
@@ -363,7 +378,6 @@ def lineup_edit(request, league_id, team_id, day):
     team = get_object_or_404(Team, pk=int(team_id))
     if request.GET.get('back_to_team_details'):
         return redirect('team_details', league.id, team.id)
-#    lineup = team.team_lineups.filter(day=day).first()
     lineup = Lineup.objects.filter(team=team, league=league, day=day).first()
     team_players = [(p.code, "%s [%s]" % (p.name, p.role))
                     for p in team.player_set.all()]
@@ -385,19 +399,26 @@ def lineup_edit(request, league_id, team_id, day):
             if error:
                 messages.error(request, error)
             else:
-                messages.success(request, "Lineup correct!")
-                lineup.timestamp = datetime.now()
-                lineup.save()
-                for pos, player in enumerate((holders + substitutes), 1):
-                    lu = LineupsPlayers.objects.filter(
-                        lineup=lineup, position=int(pos)).first()
-                    lu.player = player
-                    lu.save()
-                    print "[INFO] Lineup %s (%s) -> Player %s pos %s upgraded!"\
-                          % (team.name, day, player.name, pos)
-
-                messages.success(request, 'Lineup upgraded!')
-                return redirect('team_details', team_id, league_id)
+                now = timezone.now()
+                dead_line = Match.objects.filter(
+                    league=league, day=day).first().dead_line
+                if now > dead_line:
+                    messages.error(request, "You are out of time!")
+                    messages.info(request, "No change saved")
+                else:
+                    messages.success(request, "Lineup correct!")
+                    lineup.timestamp = now
+                    lineup.save()
+                    for pos, player in enumerate((holders + substitutes), 1):
+                        lu = LineupsPlayers.objects.filter(
+                            lineup=lineup, position=int(pos)).first()
+                        lu.player = player
+                        lu.save()
+                        print "[INFO] Lineup %s (%s) -> Player %s " \
+                              "pos %s upgraded!" % (team.name, day,
+                                                    player.name, pos)
+                    messages.success(request, 'Lineup upgraded!')
+                return redirect('team_details', league_id, team_id)
     else:
         form = UploadLineupForm(initial={'players': team_players, 'team': team,
                                          'modules': modules, 'day': day,
@@ -406,6 +427,7 @@ def lineup_edit(request, league_id, team_id, day):
             form.fields['substitute_%s' % n].initial = player.code
         form.fields['holders'].initial = [p.code for p in
                                           lineup.players.all()[:11]]
+    print "BOOM"
     return render(request, 'fantalega/upload_lineup.html',
                   {'form': form, 'players': team_players, 'team': team,
                    'league': league})
@@ -441,7 +463,8 @@ def match_details(request, league_id, day):
             visit_lineup = match.visit_team.team_lineups.filter(
                 day=int(day), league=league).first()
             offset_day = int(day) + league.offset
-            if Evaluation.objects.filter(day=offset_day).count() == 0:
+            if Evaluation.objects.filter(
+                    day=offset_day, season=league.season).count() == 0:
                 messages.error(request,
                                'day %s evaluations missing, import them!' %
                                offset_day)

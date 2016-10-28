@@ -4,7 +4,16 @@ from __future__ import unicode_literals
 from django.db import models
 from fantalega.scripts.xlstools import LineupExtractor as LEx
 from datetime import datetime
+from django.utils import timezone
 from django.contrib.auth.models import User
+from fantalega.validators import validate_season_name
+
+
+class Season(models.Model):
+    name = models.CharField(max_length=9, validators=[validate_season_name])
+
+    def __unicode__(self):
+        return self.name
 
 
 class League(models.Model):
@@ -17,7 +26,7 @@ class League(models.Model):
     max_forwards = models.IntegerField()
     rounds = models.IntegerField()
     offset = models.IntegerField()
-    season = models.CharField(max_length=9, null=True)
+    season = models.ForeignKey(Season, related_name='leagues')
 
     def max_players(self):
         return self.max_goalkeepers + self.max_defenders + \
@@ -88,7 +97,7 @@ class Player(models.Model):
     auction_value = models.IntegerField()
     role = models.CharField(max_length=16)
     team = models.ForeignKey(Team, null=True)
-    season = models.CharField(max_length=9, null=True)
+    season = models.ForeignKey(Season, related_name='players')
 
     def __unicode__(self):
         return self.name
@@ -127,6 +136,7 @@ class Match (models.Model):
     day = models.IntegerField()
     home_team = models.ForeignKey(Team, related_name='home_team')
     visit_team = models.ForeignKey(Team, related_name='visit_team')
+    dead_line = models.DateTimeField(null=True)
 
     class Meta:
         verbose_name_plural = 'Matches'
@@ -164,7 +174,7 @@ class Match (models.Model):
 
 
 class Evaluation(models.Model):
-    league = models.ForeignKey(League, related_name='league_votes')
+    season = models.ForeignKey(Season, related_name='evaluations')
     player = models.ForeignKey(Player, related_name='player_votes')
     day = models.IntegerField()
     net_value = models.FloatField()
@@ -175,12 +185,13 @@ class Evaluation(models.Model):
         return "[%s] %s" % (self.day, self.player.name)
 
     @staticmethod
-    def get_evaluations(day, code):
-        """get_evaluations(self, day, code) -> fanta_value, net_value
+    def get_evaluations(day, code, season):
+        """get_evaluations(self, day, code, season) -> fanta_value, net_value
            code: Player.code
            day: lineup.day + league.offset
+           season: season object
         """
-        player = Player.objects.filter(code=int(code)).first()
+        player = Player.objects.filter(code=int(code), season=season).first()
         evaluation = Evaluation.objects.filter(day=day, player=player).first()
         if evaluation and player:
             return code, evaluation.fanta_value, evaluation.net_value
@@ -188,7 +199,7 @@ class Evaluation(models.Model):
             return code, None, None
 
     @staticmethod
-    def upload(path, day, league, season):
+    def upload(path, day, season):
         # with open(path) as data:  # for shell string-file-path upload
         with path as data:  # for InMemoryUploadedFile object upload
             for record in data:  # nnn|PLAYER_NAME|REAL_TEAM|x|y|n
@@ -206,21 +217,21 @@ class Evaluation(models.Model):
                     print "[INFO] Upgrading %s %s" % (code, name)
                 player.save()
                 # storing evaluation
-                evaluation = Evaluation.objects.filter(day=day,
+                evaluation = Evaluation.objects.filter(day=day, season=season,
                                                        player=player).first()
                 if evaluation:
                     evaluation.net_value = v
                     evaluation.fanta_value = fv
                     evaluation.cost = cost
                     evaluation.save()
-                    print "[INFO] Upgrading values day: %s player %s" % (
-                        day, player.name)
+                    print "[INFO] Upgrading values day: %s player %s [%s]" % (
+                        day, player.name, season.name)
                 else:
                     Evaluation.objects.create(day=day, player=player, cost=cost,
                                               net_value=v, fanta_value=fv,
-                                              league=league)
-                    print "[INFO] Creating values day: %s player %s" % (
-                        day, player.name)
+                                              season=season)
+                    print "[INFO] Creating values day: %s player %s [%s]" % (
+                        day, player.name, season.name)
         print "[INFO] Evaluation uploading done!"
 
 
@@ -229,7 +240,7 @@ class Lineup (models.Model):
     team = models.ForeignKey(Team, related_name='team_lineups')
     players = models.ManyToManyField(Player, through='LineupsPlayers',
                                      related_name='player_lineups')
-    timestamp = models.DateField()
+    timestamp = models.DateTimeField()
     day = models.IntegerField()
     pts = models.FloatField(null=True)
     won = models.IntegerField(null=True)
@@ -259,7 +270,7 @@ class Lineup (models.Model):
                 players = ex.extract()
                 lineup = Lineup.objects.create(team=team, day=day,
                                                league=league,
-                                               timestamp=datetime.now())
+                                               timestamp=timezone.now())
                 for pos, player in enumerate(players, 1):
                     if player:
                         player_obj = Player.objects.filter(

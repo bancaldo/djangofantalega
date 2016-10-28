@@ -108,13 +108,13 @@ class LineupHandler(object):
         self.candidate = None
         self.available = [p for p in self.substitutes if
                           Evaluation.objects.filter(player=p, day=self.day,
-                                                    league=league
+                                                    season=league.season
                                                     ).first().fanta_value > 0.0
                           and p.role != 'goalkeeper']
 
     def get_goalkeeper_substitute(self):
         gks = [p for p in self.substitutes if Evaluation.objects.filter(
-               player=p, day=self.day, league=self.league
+               player=p, day=self.day, season=self.league.season
                ).first().fanta_value > 0.0
                and p.role == 'goalkeeper']
         if gks:
@@ -124,7 +124,7 @@ class LineupHandler(object):
 
     def get_evaluation(self, player):
         evaluation = Evaluation.objects.filter(player=player,
-                                               league=self.league,
+                                               season=self.league.season,
                                                day=self.day).first()
         return evaluation.fanta_value
 
@@ -135,7 +135,8 @@ class LineupHandler(object):
     def get_same_role_substitute(self, player):
         self.available_by_role = [p for p in self.substitutes
                                   if p.role == player.role and
-                                  Evaluation.objects.filter(league=self.league,
+                                  Evaluation.objects.filter(
+                                      season=self.league.season,
                                       player=p, day=self.day
                                   ).first().fanta_value > 0.0]
         self.candidate = self.available_by_role[0]
@@ -152,14 +153,16 @@ class LineupHandler(object):
     def is_same_role_available(self, player):
         self.available_by_role = [p for p in self.substitutes if
                                   p.role == player.role and
-                                  Evaluation.objects.filter(league=self.league,
+                                  Evaluation.objects.filter(
+                                      season=self.league.season,
                                       player=p, day=self.day
                                   ).first().fanta_value > 0.0]
         return len(self.available_by_role) > 0
 
     def is_substitute_available(self):
         self.available = [p for p in self.substitutes if
-                          Evaluation.objects.filter(league=self.league,
+                          Evaluation.objects.filter(
+                              season=self.league.season,
                               player=p, day=self.day
                           ).first().fanta_value > 0.0 and
                           p.role != 'goalkeeper']
@@ -171,7 +174,7 @@ class LineupHandler(object):
         else:
             self.not_evaluated = \
                 [p for p in self.holders if Evaluation.objects.filter(
-                    player=p, day=self.day, league=self.league
+                    player=p, day=self.day, season=self.league.season
                 ).first().fanta_value == 0.0]
         for player in self.not_evaluated:
             if self.is_same_role_available(player):
@@ -193,7 +196,7 @@ class LineupHandler(object):
                 self.substitutions += 1
 
         self.new_list = [p for p in self.holders if Evaluation.objects.filter(
-            player=p, day=self.day, league=self.league
+            player=p, day=self.day, season=self.league.season
             ).first().fanta_value > 0.0] +\
             self.added_player
         return self.def_mod(self.new_list)
@@ -218,15 +221,15 @@ class LineupHandler(object):
 
     def def_mod(self, player_list):
         total = sum([Evaluation.objects.filter(
-            player=p, day=self.day, league=self.league).first().fanta_value
-                     for p in player_list])
+            player=p, day=self.day, season=self.league.season
+            ).first().fanta_value for p in player_list])
         defenders = [p for p in player_list if p.role == 'defender']
         goalkeepers = [p for p in player_list if p.role == 'goalkeeper']
         gk = goalkeepers[0] if goalkeepers else None
         vgk = Evaluation.objects.filter(player=gk, day=self.day,
-                                        league=self.league
+                                        season=self.league.season
                                         ).first().net_value
-        def_votes = [Evaluation.objects.filter(league=self.league,
+        def_votes = [Evaluation.objects.filter(season=self.league.season,
             player=d, day=self.day).first().net_value for d in defenders]
         if len(defenders) >= 4 and gk:
             if vgk == 0.0:

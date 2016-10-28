@@ -1,7 +1,7 @@
 # noinspection PyUnresolvedReferences
 from django.contrib import admin
-from .models import League, LeaguesTeams, Team, Player, Trade, Match, Evaluation
-from .models import Lineup, LineupsPlayers
+from .models import Season, League, LeaguesTeams, Team, Player, Trade
+from .models import Match, Evaluation, Lineup, LineupsPlayers
 from django.utils.html import format_html
 
 
@@ -54,7 +54,7 @@ class TeamAdmin(admin.ModelAdmin):
 
 class MatchAdmin(admin.ModelAdmin):
     ordering = ('day', )
-    list_display = ('day', 'home_team', 'visit_team')
+    list_display = ('day', 'home_team', 'visit_team', 'dead_line')
     list_filter = ('day', )
     list_per_page = 15
 
@@ -88,7 +88,7 @@ class TradeAdmin(admin.ModelAdmin):
 
 class EvaluationAdmin(admin.ModelAdmin):
     list_display = ('day', 'player', 'fanta_value', 'net_value', 'cost')
-    list_filter = ('day', 'player', 'league')
+    list_filter = ('day', 'player', 'season')
     list_per_page = 50
 
 
@@ -115,6 +115,7 @@ class LineupsPlayersAdmin(admin.ModelAdmin):
                            colour, obj.player.name)
 
 
+admin.site.register(Season)
 admin.site.register(League, LeagueAdmin)
 admin.site.register(LeaguesTeams, LeaguesTeamsAdmin)
 admin.site.register(Team, TeamAdmin)
