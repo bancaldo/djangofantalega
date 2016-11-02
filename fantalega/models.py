@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 # noinspection PyUnresolvedReferences
 from django.db import models
 from fantalega.scripts.xlstools import LineupExtractor as LEx
-from datetime import datetime
 from django.utils import timezone
 from django.contrib.auth.models import User
 from fantalega.validators import validate_season_name
@@ -171,6 +170,14 @@ class Match (models.Model):
             return True
         else:
             return False
+
+    @staticmethod
+    def get_dead_line(league, day):
+        match_query_set = Match.objects.filter(league=league, day=day)
+        for match in match_query_set.all():
+            if not match.dead_line:
+                return None
+        return match_query_set.first().dead_line
 
 
 class Evaluation(models.Model):

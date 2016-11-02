@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Season, League, Team, Player, Trade, Match, Evaluation
 from .models import Lineup, LineupsPlayers
 from .forms import AuctionPlayer, TradeForm, UploadVotesForm, UploadLineupForm
-from .forms import TeamSellPlayersForm
+from .forms import TeamSellPlayersForm, MatchDeadLineForm
 # noinspection PyUnresolvedReferences
 from django.contrib import messages
 from fantalega.scripts.calendar import create_season
@@ -427,7 +427,6 @@ def lineup_edit(request, league_id, team_id, day):
             form.fields['substitute_%s' % n].initial = player.code
         form.fields['holders'].initial = [p.code for p in
                                           lineup.players.all()[:11]]
-    print "BOOM"
     return render(request, 'fantalega/upload_lineup.html',
                   {'form': form, 'players': team_players, 'team': team,
                    'league': league})
@@ -454,6 +453,8 @@ def match_details(request, league_id, day):
     fantaday = int(day) + league.offset
     if request.GET.get('back_to_calendar'):
         return redirect('matches', league.id)
+    if request.GET.get('insert_dead_line'):
+        return redirect('match_deadline', league.id, day)
     league_matches = league.matches.filter(day=int(day))
     missing_lineups = []
     if request.GET.get('calculate'):
@@ -518,6 +519,38 @@ def match_details(request, league_id, day):
     context = {'league': league, 'matches': league_matches, 'day': day,
                'dict_evaluated': dict_evaluated, 'fantaday': fantaday}
     return render(request, 'fantalega/match.html', context)
+
+
+@login_required
+def match_deadline(request, league_id, day):
+    league = get_object_or_404(League, pk=int(league_id))
+    days = enumerate([d['day'] for d in Match.objects.filter(
+            league=league).values('day').distinct()], 1)
+    if request.GET.get('match_details'):
+        return redirect('match_details', league.id, day)
+
+    if request.method == "POST":
+        form = MatchDeadLineForm(request.POST, initial={'day': day,
+                                                        'days': days})
+        if form.is_valid():
+            f_day = form.cleaned_data['day']
+            f_dead_line = form.cleaned_data['dead_line']
+            for match in Match.objects.filter(league=league, day=f_day).all():
+                match.dead_line = f_dead_line
+                match.save()
+            messages.success(request, "Dead line for day %s stored!" % f_day)
+
+    else:
+        form = MatchDeadLineForm(initial={'day': day, 'days': days})
+        previous_dead_line = Match.get_dead_line(league, day)
+        if previous_dead_line:
+            messages.warning(request, "Dead line already set!")
+            form.fields['dead_line'].initial = previous_dead_line
+        else:
+            messages.info(request, "Dead line doesn't exist!")
+
+    return render(request, 'fantalega/deadline.html',
+                  {'form': form, 'league': league, 'day': day})
 
 
 @login_required

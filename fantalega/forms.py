@@ -1,6 +1,6 @@
 # noinspection PyUnresolvedReferences
 from django import forms
-from .models import Player, Season
+from .models import Player, Season, Match
 # noinspection PyUnresolvedReferences
 from django.utils.safestring import mark_safe
 
@@ -17,6 +17,18 @@ class AuctionPlayer(forms.Form):
         self.fields['team'] = forms.ChoiceField(
             label=u'team', choices=self.dict_values['teams'],
             widget=forms.Select(), required=False)
+
+
+class MatchDeadLineForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.dict_values = kwargs.pop('initial')
+        super(MatchDeadLineForm, self).__init__(*args, **kwargs)
+        m_day = self.dict_values.get('day')
+        days = self.dict_values.get('days')
+        self.fields['day'] = forms.ChoiceField(initial=m_day,
+            label=u'day', choices=days,
+            widget=forms.Select(), required=False)
+        self.fields['dead_line'] = forms.DateTimeField(required=True)
 
 
 class TradeForm(forms.Form):

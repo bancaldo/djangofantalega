@@ -1,0 +1,19 @@
+{% extends 'fantalega/base.html' %}
+{% load bootstrap3 %}
+
+{% block content %}
+    <form action="#" method="get">
+    <input type="submit" class="btn"
+           value="back to match day {{ day }}" name="match_details">
+    </form>
+
+    <form method="POST" class="form">
+	  {% csrf_token %}
+        {% bootstrap_field form.day %}
+        {% bootstrap_field form.dead_line %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary">
+          {% bootstrap_icon "save" %}Save dead line</button>
+	    {% endbuttons %}
+    </form>
+{% endblock %}
