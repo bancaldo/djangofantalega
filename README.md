@@ -22,16 +22,16 @@ git clone https://github.com/bancaldo/djangofantalega djangosite
 ```
 
 activate the virtualenvironment
-# linux:
+#### linux:
 ```
 source ven\bin\activate
 ```
-# windows:
+#### windows:
 ```
 ven\Scripts\activate
 ```
 
-### Installing
+## Installing
 
 Install the given requirements (django, django-bootstrap3, xlrd)
 ```
@@ -39,7 +39,7 @@ cd djangosite
 pip install -r requirements.txt
 ```
 
-### Quick start
+## Quick start
 
 create the database with command:
 ```
@@ -74,11 +74,11 @@ python manage.py runserver
 go to the [Fantalega home page](http://127.0.0.1:8000/fantalega)
 now you can login and go to admin page where you can create a new Season
 
-# Create a new Season
+### Create a new Season
 In the Admin page click on Season and create a new one with name in format 'yyyy-yyyy'.
 (e.i. 2016-2017)
 
-# Create a new League
+### Create a new League
 In the Admin page click on League and create a new one.
 the parameters are:
 - name
@@ -90,7 +90,7 @@ the parameters are:
 
 Chose the related season.
 
-# Create the Teams 
+### Create the Teams 
 In the Admin page click on Team and create the teams.
 Choose the league associated and the user who admins the team
 
@@ -98,7 +98,7 @@ Choose the league associated and the user who admins the team
 When all the teams are created it can starts the auction and
 you can create the calendar.
 
-# to do the rest of tutorial.....
+#### to do the rest of tutorial.....
 
 ## Versioning
 
