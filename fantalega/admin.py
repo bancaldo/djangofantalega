@@ -33,6 +33,7 @@ class LeagueAdmin(admin.ModelAdmin):
     inlines = [TeamsInline, ]
     fieldsets = [(None, {'fields': ['name', 'budget', 'max_trades',
                                     'rounds', 'offset']}),
+                 ('season', {'fields': ['season']}),
                  ('number of Players', {'fields': ['max_goalkeepers',
                                                    'max_defenders',
                                                    'max_midfielders',

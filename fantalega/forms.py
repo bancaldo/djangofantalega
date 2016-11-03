@@ -44,11 +44,14 @@ class TradeForm(forms.Form):
 
 
 class UploadVotesForm(forms.Form):
-    day = forms.IntegerField()
-    seasons = enumerate([season.name for season in Season.objects.all()])
-    season = forms.ChoiceField(label=u'season', choices=seasons,
-                               widget=forms.Select(),)
-    file_in = forms.FileField()
+    def __init__(self, *args, **kwargs):
+        self.dict_values = kwargs.pop('initial')
+        super(UploadVotesForm, self).__init__(*args, **kwargs)
+        self.fields['day'] = forms.IntegerField()
+        self.fields['season'] = forms.ChoiceField(label=u'season',
+                                   choices=self.dict_values['seasons'],
+                                   widget=forms.Select(),)
+        self.fields['file_in'] = forms.FileField()
 
 
 class UploadLineupForm(forms.Form):

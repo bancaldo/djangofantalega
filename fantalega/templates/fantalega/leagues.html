@@ -5,7 +5,8 @@
     {% if leagues %}
     <ul>
       {% for league in leagues %}
-      <li><a href="{% url 'league_details' league.id %}">{{ league.name }}</a></li>
+      <li><a href="{% url 'league_details' league.id %}">{{ league.name }} -</a>
+       {{ league.season.name }}</li>
       {% endfor %}
     </ul>
     {% else %}

@@ -256,10 +256,14 @@ def vote(request, league_id, day):
 @login_required
 def upload_votes(request, league_id):
     league = get_object_or_404(League, pk=int(league_id))
+    seasons = enumerate([season.name for season in Season.objects.all()])
+
+
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
     if request.method == "POST":
-        form = UploadVotesForm(request.POST, request.FILES)
+        form = UploadVotesForm(request.POST, request.FILES,
+                               initial={'seasons': seasons})
         if form.is_valid():
             day = form.cleaned_data['day']
             dict_season = dict(form.fields['season'].choices)
@@ -270,7 +274,7 @@ def upload_votes(request, league_id):
             messages.success(request, 'votes uploaded!')
             return redirect('league_details', league.id)
     else:
-        form = UploadVotesForm()
+        form = UploadVotesForm(initial={'seasons': seasons})
     return render(request, 'fantalega/upload_votes.html',
                   {'form': form, 'league': league})
 
