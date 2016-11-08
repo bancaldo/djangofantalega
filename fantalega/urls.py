@@ -7,6 +7,8 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
+    # season urls
+    url(r'^seasons/$', views.seasons, name='seasons'),
     # league urls
     url(r'^leagues/$', views.leagues, name='leagues'),
     url(r'^leagues/(?P<league_id>[0-9]+)/$', views.league_details,

@@ -41,11 +41,10 @@ def register_user(request):
             context = Context({'user': user.username,
                                'activation_link': activation_link})
             email_body = template.render(context)
-            print email_body  # debug
             email = EmailMultiAlternatives(email_subject, email_body,
                                            'no-reply@gmail.com>', [user.email])
             email.attach_alternative(email_body, 'text/html')
-            print email_body
+            print email_body  # debug: comment in production
             # email.send()  # decomment to send email
             messages.info(request,
                           "A confirmation mail has been sent to you.\n"

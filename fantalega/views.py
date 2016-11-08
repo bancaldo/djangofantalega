@@ -18,6 +18,12 @@ def index(request):
 
 
 @login_required
+def seasons(request):
+    context = {'seasons': Season.objects.order_by('-name')}
+    return render(request, 'fantalega/seasons.html', context)
+
+
+@login_required
 def leagues(request):
     context = {'leagues': League.objects.order_by('-name')}
     return render(request, 'fantalega/leagues.html', context)

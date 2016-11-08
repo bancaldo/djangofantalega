@@ -1,0 +1,14 @@
+{% extends 'fantalega/base.html' %}
+
+{% block content %}
+        <h1><font color="green">List of SEASONS</font></h1>
+    {% if seasons %}
+    <ul>
+      {% for season in seasons %}
+      <li>{{ season.name }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <font color="red"><b>No league found.</b></font>
+    {% endif %}
+{% endblock %}
