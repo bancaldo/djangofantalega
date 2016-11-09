@@ -65,13 +65,19 @@
                  <input type="submit" class="btn" value="new trade"
                         name="new trade">
                 </form>
+
                 <b><font color="orange">Team lineups:</font></b><br>
+				{% if lineups %}
                   {% for lineup in lineups %}
                     <ul>
                       <li><a href="{% url 'lineup_details' league.id team.id lineup.day %}">lineup day:
                           {{ lineup.day }}</a>: {{ lineup.pts|pts_filter }}</li>
                     </ul>
                   {% endfor %}
+				{% else %}
+				  <b><font color="red">no lineup uploaded yet</font></b>
+			    {% endif %}
+
                 <form action="#" method="get">
                  <input type="submit" class="btn" value="new lineup"
                         name="new lineup">

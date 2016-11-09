@@ -56,6 +56,11 @@ class Team(models.Model):
 
     @staticmethod
     def auction_upload(path):
+        """This method import Auction directly from a csv file
+           with this format:
+           'name;auction_value;team_name
+           'team_name' is the name of the object Team
+        """
         with open(path) as data:
             for record in data:
                 name, auction_value, team_name = record.strip().split(";")
