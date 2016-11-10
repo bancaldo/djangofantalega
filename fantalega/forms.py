@@ -1,6 +1,6 @@
 # noinspection PyUnresolvedReferences
 from django import forms
-from .models import Player, Season, Match
+from .models import Player
 # noinspection PyUnresolvedReferences
 from django.utils.safestring import mark_safe
 

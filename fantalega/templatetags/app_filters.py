@@ -36,10 +36,14 @@ def get_pts(team, day):
 
 @register.filter(name='need_calc')
 def need_calc(league, day):
-    for team in league.team_set.all():
-        if not team.team_lineups.filter(day=day).first():
-            return False
-    return True
+    try:
+        for team in league.team_set.all():
+            queryset_lineup = team.team_lineups.filter(day=day)
+            if not queryset_lineup.first():
+                return False
+        return True
+    except AttributeError:
+        return False
 
 
 @register.filter(name='has_pts')
@@ -59,11 +63,14 @@ def get_total(team, day):
 
 @register.filter(name='get_goals')
 def get_goals(team, day):
-    lineup = team.team_lineups.filter(day=int(day)).first()
-    if lineup:
-        return lineup.goals_made
-    else:
-        return "ND"
+    try:
+        lineup = team.team_lineups.filter(day=int(day)).first()
+        if lineup:
+            return lineup.goals_made
+        else:
+            return "ND"
+    except AttributeError:
+        return "NL"
 
 
 @register.filter(name='get_evaluated')
