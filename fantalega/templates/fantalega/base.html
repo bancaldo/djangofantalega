@@ -27,10 +27,11 @@
               <font color="red">Admin</font></a></div>
       {% endif %}
       <div class="navbar-header">
+        <a class="navbar-brand" href="{% url 'seasons' %}">Seasons</a></div>
+      <div class="navbar-header">
         <a class="navbar-brand" href="{% url 'leagues' %}">Leagues</a></div>
       <div class="navbar-header">
-        <a class="navbar-brand" href="{% url 'players' %}">
-          Players</a></div>
+        <a class="navbar-brand" href="{% url 'players' %}">Players</a></div>
     {% endif %}
 
       <div class="navbar-collapse collapse">

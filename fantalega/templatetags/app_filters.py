@@ -139,7 +139,7 @@ def get_played(player, code):
 
 
 @register.filter(name='total_to_buy')
-def get_played(team, league):
+def total_to_buy(team, league):
     player_bought = team.player_set.count()
     remain = league.max_players() - player_bought
     color = "green" if not remain else "red"
@@ -184,7 +184,10 @@ def get_avg(player, code):
     fanta_values = [e.fanta_value for e
                     in Evaluation.objects.filter(player=obj_player).all()
                     if e.fanta_value > 0.0 ]
-    return sum(fanta_values)/len(fanta_values)
+    try:
+        return sum(fanta_values)/len(fanta_values)
+    except ZeroDivisionError:
+        return 0.0
 
 
 @register.assignment_tag
