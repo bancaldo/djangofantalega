@@ -15,17 +15,19 @@ urlpatterns = [
         name='league_details'),
     url(r'^leagues/(?P<league_id>[0-9]+)/calendar$', views.calendar,
         name='calendar'),
+    # chart url
     url(r'^leagues/(?P<league_id>[0-9]+)/chart$',
         views.chart, name='chart'),
     # team urls
     url(r'^leagues/(?P<league_id>[0-9]+)/teams/(?P<team_id>[0-9]+)/$',
         views.team_details, name='team_details'),
-    url(r'^leagues/(?P<league_id>[0-9]+)/teams/'
-        r'(?P<team_id>[0-9]+)/player_sale$', views.sale, name='sale'),
     # players urls
     url(r'^players/$', views.players, name='players'),
     url(r'^players/(?P<player_id>[0-9]+)/$', views.player_details,
         name='player_details'),
+    # player sale url
+    url(r'^leagues/(?P<league_id>[0-9]+)/teams/'
+        r'(?P<team_id>[0-9]+)/player_sale$', views.sale, name='sale'),
     # auction urls
     url(r'^leagues/(?P<league_id>[0-9]+)/auction$', views.auction,
         name='auction'),

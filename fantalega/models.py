@@ -67,16 +67,13 @@ class Team(models.Model):
                 player = Player.objects.filter(name=name.upper()).first()
                 if player:
                     player.auction_value = int(auction_value)
-                    team = Team.objects.filter(name=team_name).first()
+                    team = Team.objects.filter(name=team_name.strip()).first()
                     if team:
-                        player.team = team
-                        team.budget -= player.auction_value
-                        player.save()
-                        team.save()
-                        print "[INFO] Remaining Budget %s: %s" % (team.name,
-                                                                  team.budget)
-                        print "[INFO] Associating %s - %s" % (player.name,
-                                                              team.name)
+                        if player not in team.player_set.all():
+                            player.team = team
+                            team.budget -= player.auction_value
+                            player.save()
+                            team.save()
                     else:
                         print "[ERROR] Team %s not found" % team_name
                 else:

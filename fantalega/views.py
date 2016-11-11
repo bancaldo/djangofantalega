@@ -57,9 +57,10 @@ def league_details(request, league_id):
 def team_details(request, league_id, team_id):
     league = get_object_or_404(League, pk=int(league_id))
     team = get_object_or_404(Team, pk=int(team_id))
+    team_players = team.player_set.order_by('code').all()
     lineups = Lineup.objects.filter(team=team, league=league).order_by('day')
-    context = {'team': team, 'lineups': lineups,
-               'user': request.user, 'league': league}
+    context = {'team': team, 'user': request.user, 'league': league,
+	           'lineups': lineups, 'players': team_players}
     if request.GET.get('back_to_teams'):
         return redirect('league_details', league.id)
     if request.GET.get('new lineup'):
@@ -154,10 +155,11 @@ def trade(request, league_id, team_id):
     team = get_object_or_404(Team, pk=int(team_id))
     if request.GET.get('back_to_team_details'):
         return redirect('team_details', league.id, team.id)
-    team_players = [(p.code, "%s - %s" % (p.name, p.role))
+    team_players = [(p.code, "%s (%s)" % (p.name, p.role))
                     for p in team.player_set.all()]
-    others = [(p.code, "%s - %s" % (p.name, p.role))
-              for p in Player.objects.order_by('name')if p.team]
+    others = [(p.code, "%s (%s) --- %s" % (p.name, p.role, p.team.name))
+              for p in Player.objects.order_by('name') if p.team and p not
+              in team.player_set.all()]
     if request.method == "POST":
         form = TradeForm(request.POST, initial={'players': team_players,
                                                 'others': others,
@@ -172,7 +174,7 @@ def trade(request, league_id, team_id):
             team.max_trades -= 1
             other_team = player_in.team
             other_team.max_trades -= 1
-            if team.max_trades > 0 and other_team.max_trades > 0:
+            if team.max_trades >= 0 and other_team.max_trades >= 0:
                 player_in.team = team
                 player_out.team = other_team
                 if player_in.role == player_out.role:
